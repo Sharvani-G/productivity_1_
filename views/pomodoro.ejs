@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+
+    <style>
+        body {
+            font-family: "Poppins", sans-serif;
+            background-color: #0d1117;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #161b22;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            padding: 40px;
+            text-align: center;
+            width: 330px;
+        }
+
+        h1 {
+            color: #0717ef;
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+        }
+
+        .timer-setup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .time-inputs {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .time-inputs input {
+            width: 65px;
+            padding: 8px;
+            font-size: 18px;
+            text-align: center;
+            border: 2px solid #1f6feb;
+            border-radius: 10px;
+            outline: none;
+            background-color: #0d1117;
+            color: #ffffff;
+            transition: 0.3s;
+        }
+
+        .time-inputs input:focus {
+            border-color: #58a6ff;
+        }
+
+        .time-inputs span {
+            font-size: 22px;
+            color: #58a6ff;
+            font-weight: bold;
+        }
+
+        #setTime {
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #setTime:hover {
+            background-color: #388bfd;
+            transform: scale(1.05);
+        }
+
+        .timer {
+            font-size: 50px;
+            color: #ffffff;
+            font-weight: 600;
+            margin: 25px 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 500;
+        }
+
+        #start {
+            background-color: #238636;
+            color: white;
+        }
+
+        #start:hover {
+            background-color: #2ea043;
+        }
+
+        #pause {
+            background-color: #f85149;
+            color: white;
+        }
+
+        #pause:hover {
+            background-color: #da3633;
+        }
+
+        #reset {
+            background-color: #1f6feb;
+            color: white;
+        }
+
+        #reset:hover {
+            background-color: #388bfd;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                width: 280px;
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .time-inputs input {
+                width: 55px;
+                font-size: 16px;
+            }
+
+            .timer {
+                font-size: 40px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="container">
+        <h1>Timer</h1>
+
+        <div class="timer-setup">
+            <div class="time-inputs">
+                <input type="number" id="hours" placeholder="00" min="0"> <span>H</span>
+                <input type="number" id="minutes" placeholder="00" min="0" max="59"> <span>M</span>
+                <input type="number" id="seconds" placeholder="00" min="0" max="59"> <span>S</span>
+            </div>
+            <button id="setTime">Set Time</button>
+        </div>
+
+        <div class="timer" id="timerDisplay">00:00:00</div>
+
+        <div class="controls">
+            <button id="start">Start</button>
+            <button id="pause">Pause</button>
+            <button id="reset">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let totalSeconds = 0;
+        let isPaused = false;
+
+        const display = document.getElementById("timerDisplay");
+
+        function updateDisplay() {
+            let hrs = Math.floor(totalSeconds / 3600);
+            let mins = Math.floor((totalSeconds % 3600) / 60);
+            let secs = totalSeconds % 60;
+
+            display.textContent =
+                String(hrs).padStart(2, "0") + ":" +
+                String(mins).padStart(2, "0") + ":" +
+                String(secs).padStart(2, "0");
+        }
+
+        document.getElementById("setTime").addEventListener("click", () => {
+            let h = parseInt(document.getElementById("hours").value) || 0;
+            let m = parseInt(document.getElementById("minutes").value) || 0;
+            let s = parseInt(document.getElementById("seconds").value) || 0;
+
+            totalSeconds = h * 3600 + m * 60 + s;
+            updateDisplay();
+        });
+
+        document.getElementById("start").addEventListener("click", () => {
+            if (timerInterval) return;
+            timerInterval = setInterval(() => {
+                if (!isPaused && totalSeconds > 0) {
+                    totalSeconds--;
+                    updateDisplay();
+                }
+            }, 1000);
+        });
+
+        document.getElementById("pause").addEventListener("click", () => {
+            isPaused = !isPaused;
+        });
+
+        document.getElementById("reset").addEventListener("click", () => {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            totalSeconds = 0;
+            updateDisplay();
+        });
+    </script>
+
+</body>
+</html>
