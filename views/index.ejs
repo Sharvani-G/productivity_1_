@@ -9,7 +9,9 @@
 <link href="/styles/poppins.css" rel="stylesheet">
 </head>
 <body>
-    <%-include("partials/header.ejs")%>
+    
+      <canvas id="bg-canvas"></canvas>
+<%-include("partials/header.ejs")%>
 
 <!-- Main Content Section -->
 <div class="content-section">
@@ -52,5 +54,7 @@
 </section>
 
 </div>
+
+<script src="/js/animation.js" nonce="RANDOM_BASE64"></script>
 </body>
 </html>

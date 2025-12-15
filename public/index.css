@@ -92,7 +92,7 @@ body{
 .content-section {
     margin-left: 300px; /* leave space for fixed sidebar */
     padding: 100px;
-    background-color: #111;
+    
     color: white;
     height: auto;
 }
@@ -105,7 +105,7 @@ body{
     grid-auto-flow: row;
     height: 250px;
     width: 600px;
-    background-color: #f4f4f4;
+  background-color: rgb(244, 244, 244); 
     border: 1px solid #ccc;
     border-radius: 10px;
     margin: 0 auto; 
@@ -147,7 +147,7 @@ body{
 .page-section{
     margin: 30px; /* leave space for fixed sidebar */
     padding: 80px;
-    background-color: #111;
+    background-color: rgba(17, 17, 17, 0.3); /* was 0.85, now 0.3 */
     color: white;
     height: auto;
     border: #f4f4f4 solid 2px;
@@ -323,3 +323,30 @@ button {
     transform: scale(1.02);
     transition: transform 0.2s ease;
 }
+html, body {
+  margin: 0;
+  padding: 0;
+    background: transparent;
+
+}
+
+
+/* Foreground content */
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+section {
+ 
+  color: rgb(0, 0, 0);
+}
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+}
+
