@@ -231,3 +231,27 @@ If delete/edit not working:
 
 **Status:** ✅ Implementation Complete
 **Date:** November 11, 2025
+
+---
+
+## 🧭 Legacy orphan `Week` documents (migration decision)
+
+After reviewing the data and the rollout constraints, we decided **not** to perform an automated data migration for legacy `Week` documents that do not have a `user` field (so-called "orphan" weeks).
+
+Why:
+- This is the fastest and safest option for deployment: no destructive writes will be performed automatically.
+- The server now enforces per-user scoping and a partial unique index on `{ user, weekKey }`, so orphan docs will simply be ignored by authenticated endpoints and will not affect new per-user data.
+
+If you later decide to migrate these orphan weeks, there are scripts in the repository to help:
+
+- `scripts/list_indexes.js` — list current indexes on the `weeks` collection
+- `scripts/fix_indexes.js` — drop legacy conflicting indexes and ensure the partial unique index is present
+- `scripts/smoke_user_scope.js` — automated smoke test to validate per-user isolation
+
+Manual migration approach (outline):
+1. Run a dry-run script that reports orphan docs and suggested assignments (no writes).
+2. Review the dry-run output and decide mapping rules (e.g., archive, assign to specific user, or leave untouched).
+3. Run a safe apply script that copies/updates docs under a `user` and marks source docs as migrated (or archives them).
+4. Verify with `scripts/smoke_user_scope.js` and by inspecting the DB.
+
+If you'd like, I can prepare the dry-run and apply scripts and a short verification checklist — just say the word and I'll add them to the repo.
