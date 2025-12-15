@@ -63,6 +63,23 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+// Simple auth middleware: validate Bearer token and attach `req.user`
+function requireAuth(req, res, next) {
+  const auth = req.get('authorization') || req.get('Authorization');
+  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+  const token = auth.slice(7);
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = payload;
+    return next();
+  } catch (e) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+
+// Protect API routes for tasks - ensure requests include a valid token
+app.use('/api/tasks', requireAuth);
+
 // connect to db 
 const MONGODB_URI = process.env.MONGODB_URI || "";
 if (!MONGODB_URI) {
@@ -73,10 +90,65 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
+// After connecting, ensure old single-field unique index on weekKey is removed
+// so we can enforce per-user uniqueness (compound index user+weekKey).
+mongoose.connection.once('open', async () => {
+  try {
+    const coll = mongoose.connection.db.collection('weeks');
+    const indexes = await coll.indexes();
+    const hasWeekKeyUnique = indexes.some(ix => ix.name === 'weekKey_1');
+    if (hasWeekKeyUnique) {
+      console.log('ℹ️ Dropping legacy unique index weekKey_1 to enable per-user weeks');
+      await coll.dropIndex('weekKey_1');
+      console.log('✅ Dropped legacy weekKey_1 index');
+    }
+    // If there's an existing user+weekKey index that enforces uniqueness on null users
+    // (i.e., it lacks a partialFilterExpression), drop it and recreate it with
+    // partialFilterExpression: { user: { $exists: true } } so that only docs with
+    // a user will be constrained to uniqueness.
+    const uwIndex = indexes.find(ix => {
+      const kp = ix.key || ix.keyPattern || {};
+      // match either 'user' or legacy 'userId'
+      const hasUserKey = Object.keys(kp).some(k => k === 'user' || k === 'userId');
+      return hasUserKey && kp.weekKey === 1;
+    });
+    if (uwIndex && !uwIndex.partialFilterExpression) {
+      console.log('ℹ️ Found non-partial user+weekKey index, replacing with partial index');
+      try {
+        await coll.dropIndex(uwIndex.name);
+      } catch (e) { console.warn('dropIndex failed', e.message || e); }
+      // create a proper partial unique index on `user` + `weekKey`
+      await coll.createIndex({ user: 1, weekKey: 1 }, { unique: true, partialFilterExpression: { user: { $exists: true } }, name: 'user_week_partial' });
+      console.log('✅ Recreated user-week partial unique index as user_week_partial');
+    }
+    // Some older deployments used 'userId' in index names (e.g. userId_1_weekKey_1)
+    // or left behind single-field userId indexes. Drop any such legacy indexes
+    // to avoid uniqueness conflicts caused by documents with null users.
+    for (const ix of indexes) {
+      if (!ix.name) continue;
+      if (ix.name.includes('userId')) {
+        try {
+          console.log(`ℹ️ Dropping legacy index ${ix.name}`);
+          await coll.dropIndex(ix.name);
+          console.log(`✅ Dropped legacy index ${ix.name}`);
+        } catch (e) {
+          console.warn(`Failed to drop legacy index ${ix.name}`, e.message || e);
+        }
+      }
+    }
+  } catch (e) {
+    // non-fatal: log and continue
+    console.warn('Index cleanup warning:', e.message || e);
+  }
+});
+
 // API
 app.get("/api/tasks/:weekKey", async (req, res, next) => {
   try {
-    const doc = await Week.findOne({ weekKey: req.params.weekKey }).lean();
+    // user-specific fetch
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const doc = await Week.findOne({ weekKey: req.params.weekKey, user: userId }).lean();
     res.json(doc?.days || {});
   } catch (e) { next(e); }
 });
@@ -90,11 +162,16 @@ app.post("/api/tasks/:weekKey", async (req, res, next) => {
     if (typeof days !== "object" || Array.isArray(days)) {
       return res.status(400).json({ error: "Invalid payload: 'days' must be an object" });
     }
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    // upsert only for this user + weekKey
     const updated = await Week.findOneAndUpdate(
-      { weekKey },//filter
-      { days, updatedAt: new Date() },//If it exists — update it.
-      { upsert: true, new: true }//If it doesn’t — create it, new i updated doc is returned
-     ).lean();//Then give me the updated result as plain JSON.
+      { weekKey, user: userId }, // filter
+      { $set: { days, updatedAt: new Date() }, $setOnInsert: { user: userId } },
+      { upsert: true, new: true }
+    ).lean();
+
     res.json({ success: true, weekKey, days: updated.days });
   } catch (e) { next(e); }
 });
@@ -102,7 +179,9 @@ app.post("/api/tasks/:weekKey", async (req, res, next) => {
 app.delete("/api/tasks/:weekKey/:dayIndex/:taskId", async (req, res, next) => {
   try {
     const { weekKey, dayIndex, taskId } = req.params;
-    const doc = await Week.findOne({ weekKey });
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const doc = await Week.findOne({ weekKey, user: userId });
     //check if doc exists and dayIndex exists
     if (!doc || !doc.days[dayIndex]) {
       return res.status(404).json({ error: "Week or day not found" });
@@ -123,7 +202,10 @@ app.put("/api/tasks/:weekKey/:dayIndex/:taskId", async (req, res, next) => {
     const { weekKey, dayIndex, taskId } = req.params;
     const { text, status } = req.body;
 
-    const doc = await Week.findOne({ weekKey });
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const doc = await Week.findOne({ weekKey, user: userId });
     
     if (!doc || !doc.days[dayIndex]) {
       return res.status(404).json({ error: "Week or day not found" });
@@ -145,7 +227,9 @@ app.put("/api/tasks/:weekKey/:dayIndex/:taskId", async (req, res, next) => {
 
 app.delete("/api/tasks/:weekKey", async (req, res, next) => {
   try {
-    await Week.deleteOne({ weekKey: req.params.weekKey });
+    const userId = req.user && req.user.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    await Week.deleteOne({ weekKey: req.params.weekKey, user: userId });
     res.json({ cleared: true });
   } catch (e) { next(e); }
 });

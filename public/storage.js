@@ -12,33 +12,44 @@ These functions are used by your React/JS UI.*/
 const API_BASE = "";
 
 export async function loadTasksFromBackend(weekKey) {
-  const res = await fetch(`${API_BASE}/api/tasks/${weekKey}`);
+  const token = localStorage.getItem('authToken');
+  const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+  const res = await fetch(`${API_BASE}/api/tasks/${weekKey}`, { headers });
   if (!res.ok) return {};
   return await res.json();
 }
 
 export async function saveTasksToBackend(weekKey) {
   const days = window.tasksByWeek[weekKey] || {};
+  const token = localStorage.getItem('authToken');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
 
   await fetch(`${API_BASE}/api/tasks/${weekKey}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ days })
   });
 }
 
 export async function deleteTaskFromBackend(weekKey, dayIndex, taskId) {
+  const token = localStorage.getItem('authToken');
+  const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
   const res = await fetch(`${API_BASE}/api/tasks/${weekKey}/${dayIndex}/${taskId}`, {
-    method: "DELETE"
+    method: "DELETE",
+    headers
   });
   if (!res.ok) throw new Error("Failed to delete task");
   return await res.json();
 }
 
 export async function updateTaskOnBackend(weekKey, dayIndex, taskId, text, status) {
+  const token = localStorage.getItem('authToken');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
   const res = await fetch(`${API_BASE}/api/tasks/${weekKey}/${dayIndex}/${taskId}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ text, status })
   });
   if (!res.ok) throw new Error("Failed to update task");
@@ -46,7 +57,9 @@ export async function updateTaskOnBackend(weekKey, dayIndex, taskId, text, statu
 }
 
 export async function clearWeekOnBackend(weekKey) {
-  await fetch(`${API_BASE}/api/tasks/${weekKey}`, { method: "DELETE" });
+  const token = localStorage.getItem('authToken');
+  const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+  await fetch(`${API_BASE}/api/tasks/${weekKey}`, { method: "DELETE", headers });
 }
 
 /*"Content-Type": "application/json"

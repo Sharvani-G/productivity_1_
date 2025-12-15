@@ -91,6 +91,9 @@
             localStorage.removeItem('authToken');
             localStorage.removeItem('username');
             localStorage.removeItem('userEmail');
+            // clear any cached weekly data so logged-out state doesn't leak user data
+            localStorage.removeItem('tasksByWeek');
+            try { window.tasksByWeek = {}; } catch (e) { /* ignore */ }
             window.location.href = '/';
           });
           topContainer.appendChild(btn);
