@@ -1,57 +1,93 @@
-/*FIRST — What is this file?
+/**
+ * Utility functions for interacting with the task API endpoints.
+ * All functions rely on the JWT 'token' being set in localStorage.
+ */
 
-This file contains frontend functions that:
+function getToken() {
+    return localStorage.getItem('token');
+}
 
-Talk to your backend (/api/tasks/...)
-Send data (POST/PUT)
-Get data (GET)
-Delete data (DELETE)
-These functions are used by your React/JS UI.*/
+// Helper for authorized API calls
+async function fetchAuthorized(url, method = 'GET', body = null) {
+    const token = getToken();
+    if (!token) {
+        // Redirect to login if no token is found
+        window.location.href = '/login';
+        throw new Error('Unauthorized: No token found. Redirecting...');
+    }
+    
+    const headers = {
+        'Authorization': `Bearer ${token}`,
+    };
+    if (body) {
+        headers['Content-Type'] = 'application/json';
+    }
 
+    const options = {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+    };
 
-const API_BASE = "";
+    const response = await fetch(url, options);
 
+    if (response.status === 401) {
+        // If the token is invalid or expired
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        throw new Error('Session expired. Redirecting...');
+    }
+
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(`API Error: ${response.status} - ${errorBody.message}`);
+    }
+    
+    // Attempt to return JSON, fall back to empty object for successful DELETEs
+    return response.json().catch(() => ({})); 
+}
+
+/**
+ * Loads the tasks for a specific week from the backend.
+ * Uses GET /api/tasks/:weekKey.
+ */
 export async function loadTasksFromBackend(weekKey) {
-  const res = await fetch(`${API_BASE}/api/tasks/${weekKey}`);
-  if (!res.ok) return {};
-  return await res.json();
+    // The API returns the `days` object directly (e.g., { 0: [...tasks], 1: [...] })
+    const data = await fetchAuthorized(`/api/tasks/${weekKey}`, 'GET');
+    return data || {};
 }
 
+/**
+ * Saves the entire week's task object to the backend (upsert).
+ * Uses POST /api/tasks/:weekKey.
+ */
 export async function saveTasksToBackend(weekKey) {
-  const days = window.tasksByWeek[weekKey] || {};
-
-  await fetch(`${API_BASE}/api/tasks/${weekKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ days })
-  });
+    // Get the current local state of the tasks for the week
+    const days = window.tasksByWeek[weekKey];
+    return fetchAuthorized(`/api/tasks/${weekKey}`, 'POST', { days });
 }
 
+/**
+ * Deletes a single task from the backend.
+ * Uses DELETE /api/tasks/:weekKey/:dayIndex/:taskId.
+ */
 export async function deleteTaskFromBackend(weekKey, dayIndex, taskId) {
-  const res = await fetch(`${API_BASE}/api/tasks/${weekKey}/${dayIndex}/${taskId}`, {
-    method: "DELETE"
-  });
-  if (!res.ok) throw new Error("Failed to delete task");
-  return await res.json();
+    return fetchAuthorized(`/api/tasks/${weekKey}/${dayIndex}/${taskId}`, 'DELETE');
 }
 
+/**
+ * Updates a single task (text and status) on the backend.
+ * Uses PUT /api/tasks/:weekKey/:dayIndex/:taskId.
+ */
 export async function updateTaskOnBackend(weekKey, dayIndex, taskId, text, status) {
-  const res = await fetch(`${API_BASE}/api/tasks/${weekKey}/${dayIndex}/${taskId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, status })
-  });
-  if (!res.ok) throw new Error("Failed to update task");
-  return await res.json();
+    const apiStatus = status.toLowerCase().replace(' ', '-');
+    return fetchAuthorized(`/api/tasks/${weekKey}/${dayIndex}/${taskId}`, 'PUT', { text, status: apiStatus });
 }
 
+/**
+ * Clears an entire week by deleting the Week document.
+ * Uses DELETE /api/tasks/:weekKey.
+ */
 export async function clearWeekOnBackend(weekKey) {
-  await fetch(`${API_BASE}/api/tasks/${weekKey}`, { method: "DELETE" });
+    return fetchAuthorized(`/api/tasks/${weekKey}`, 'DELETE');
 }
-
-/*"Content-Type": "application/json"
-= Telling backend “This request body contains JSON”.
-
-It triggers express.json() to parse JSON into a real JS object.
-
-Without it, backend cannot read your data.*/

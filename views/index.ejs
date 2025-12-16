@@ -9,7 +9,9 @@
 <link href="/styles/poppins.css" rel="stylesheet">
 </head>
 <body>
-    <%-include("partials/header.ejs")%>
+    
+      <canvas id="bg-canvas"></canvas>
+<%-include("partials/header.ejs")%>
 
 <!-- Main Content Section -->
 <div class="content-section">
@@ -43,8 +45,12 @@
 
 <section id="todo" class="page-section">
 
-  <h2>To-Do List</h2>
+ <h2>To-Do List</h2>
   <p>Manage your tasks efficiently with our to-do list feature.</p>
+  <div id="current-day-tasks">
+    <p>Loading...</p>
+  </div>
+  </section>
 </section>
 
 <section id="features" class="page-section">
@@ -52,5 +58,8 @@
 </section>
 
 </div>
+
+<script src="/js/index-todo.js" nonce="<%= cspNonce %>"></script>
+<script src="/js/animation.js" nonce="<%= cspNonce %>"></script>
 </body>
 </html>

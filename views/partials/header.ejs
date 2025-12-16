@@ -9,12 +9,12 @@
 
       .logo{ display:block; margin-top:15px; margin-left: 10px; font-weight:800; font-size:26px; color: #fff; padding: 14px 12px; width: 220px; }
 
-    .login{ display:flex; align-items:center; justify-content: flex-end; background-image: radial-gradient(circle at center, #1e047e, #000000); padding: 0 20px; height:56px; }
+    .login{ display:flex; align-items:center; justify-content: flex-end; background-image: radial-gradient(circle at center,  #accccf, #000000); padding: 0 20px; height:56px; }
 
     .sign{ text-align: center; padding: 10px; background-color: #000000; color: white; border: none; cursor: pointer; width: 100px; height: 45px; border: solid white 2px; border-radius: 50px; }
     .sign:hover{ background-color: rgb(64, 61, 61); color:white; border: solid white 2px; width: 95px; height: 40px; }
 
-    .content-section { margin-left: 300px; padding: 100px; background-color: #111; color: white; height: auto; }
+    .content-section { margin-left: 300px; padding: 100px;  color: white; height: auto; }
 
     /* site-nav styles to match sidebar buttons */
     .site-nav { padding-left:0; height:100%; display:flex; }
@@ -40,7 +40,7 @@
     html { scroll-behavior: smooth; }
 
     /* auth button pill */
-    .auth-btn, .auth-btn:visited { border-radius:22px; padding:8px 14px; display:inline-flex; background:#0b0b0b; color:#fff; text-decoration:none; border:2px solid #fff; box-sizing: border-box; min-height:36px; line-height:18px; align-items:center; justify-content:center; white-space:nowrap; }
+    .auth-btn, .auth-btn:visited { border-radius:22px; padding:8px 14px; display:inline-flex; background:#0b0b0b; color:#a3dad8;; text-decoration:none; border:2px solid #fff; box-sizing: border-box; min-height:36px; line-height:18px; align-items:center; justify-content:center; white-space:nowrap; }
     .auth-btn:hover { opacity:0.95; }
 
     /* ensure sidebar hides on small screens */
@@ -80,7 +80,7 @@
       if (!topContainer) return;
 
       function render() {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
         const user = localStorage.getItem('username') || '';
         topContainer.innerHTML = '';
         if (token) {
@@ -88,9 +88,12 @@
           btn.className = 'auth-btn';
           btn.textContent = 'Logout';
           btn.addEventListener('click', () => {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
             localStorage.removeItem('username');
             localStorage.removeItem('userEmail');
+            // clear any cached weekly data so logged-out state doesn't leak user data
+            localStorage.removeItem('tasksByWeek');
+            try { window.tasksByWeek = {}; } catch (e) { /* ignore */ }
             window.location.href = '/';
           });
           topContainer.appendChild(btn);
