@@ -62,7 +62,7 @@ body{
     display:flex;
     align-items:center;
     justify-content: flex-end;
-    background-image: radial-gradient(circle at center, #1e047e, #000000);
+    background-image: radial-gradient(circle at center, #accccf, #292727);
     padding: 0 20px;
     height:60px;
 }

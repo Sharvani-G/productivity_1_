@@ -1,96 +1,149 @@
-// Fetch and render today's todos for the authenticated user
-// Helper used by both DOMContentLoaded and manual invocation from DevTools
-async function fetchTodosForToday() {
-  try {
-    const container = document.getElementById('todo');
-    if (!container) return null;
+// public/js/index-todo.js - Corrected to match weekly tracker's date AND day index logic
 
-    const token = localStorage.getItem('authToken');
+/**
+ * Gets the Monday of the current week, consistent with public/main.js.
+ * Defines the week as starting on Monday.
+ * @param {Date} date 
+ * @returns {Date} The Date object for the Monday of that week.
+ */
+function getMonday(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    // d.getDate() - day: brings it to Sunday (day 0)
+    // + (day === 0 ? -6 : 1): adjusts it to Monday
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); 
+    d.setDate(diff);
+    // Reset time to start of day to ensure consistency
+    d.setHours(0, 0, 0, 0); 
+    return d;
+}
+
+/**
+ * Formats the Date object into the YYYY-MM-DD format used as the weekKey.
+ * @param {Date} date 
+ * @returns {string} Week key string (e.g., '2025-12-15')
+ */
+function formatWeekKey(date) {
+    // We expect the date to be the Monday of the week
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Calculates the current week's details using the Monday-based key.
+ * @returns {object} { weekKey: 'YYYY-MM-DD', dayIndex: 0-6 (0=Mon, 6=Sun) }
+ */
+function getCurrentWeekDetails() {
+    const date = new Date();
+    // JS getDay() returns 0 for Sunday, 1 for Monday, ..., 6 for Saturday.
+    const jsDayIndex = date.getDay(); 
+    
+    // FIX: Convert JS day index (0=Sun, 1=Mon, 2=Tue, ..., 6=Sat) 
+    // to the Tracker's UI index (0=Mon, 1=Tue, 2=Wed, ..., 6=Sun).
+    // The formula (dayIndex + 6) % 7 performs this shift.
+    const trackerDayIndex = (jsDayIndex + 6) % 7;
+
+    // Get the Monday of the current week (which is used as the weekKey)
+    const monday = getMonday(date);
+    const weekKey = formatWeekKey(monday);
+
+    return { 
+        weekKey: weekKey, 
+        // Use the corrected day index (0=Mon, 6=Sun) to match how tasks were saved
+        dayIndex: trackerDayIndex 
+    };
+}
+
+/**
+ * Renders the tasks into the given container element. 
+ * @param {Array<Object>} tasks - The list of tasks.
+ * @param {HTMLElement} container - The DOM element to render into.
+ */
+function renderTasks(tasks, container) {
+    container.innerHTML = ''; 
+
+    if (tasks.length === 0) {
+        container.innerHTML = '<p>🎉 No tasks scheduled for today. Time to relax or <a href="/weekly">add some</a>!</p>';
+        return;
+    }
+
+    const ul = document.createElement('ul');
+
+    tasks.forEach(task => {
+        const li = document.createElement('li');
+        // Simple display: task text and status
+        const statusText = task.status === 'completed' ? '✅' : '⏳';
+        li.innerHTML = `${statusText} ${task.text}`;
+        
+        // Apply minimal style for completed tasks
+        if (task.status === 'completed') {
+            li.style.textDecoration = 'line-through';
+            li.style.opacity = '0.7';
+        }
+        
+        ul.appendChild(li);
+    });
+
+    container.appendChild(ul);
+}
+
+/**
+ * Fetches the current day's tasks for the authenticated user and renders them.
+ */
+async function loadCurrentDayTasks() {
+    const tasksContainer = document.getElementById('current-day-tasks');
+    if (!tasksContainer) return; 
+
+    // 1. Check for user authentication token
+    const token = localStorage.getItem('token');
     if (!token) {
-      console.log('index-todo: no auth token present (anonymous user)');
-      return null; // quiet for anonymous users
+        tasksContainer.innerHTML = '<p>Please <a href="/login" style="color: #72cfd7ff;">log in</a> to see your daily tasks.</p>';
+        return;
     }
 
-    // compute weekKey (Monday of current week) — same logic as planner.js
-    const today = new Date();
-    const day = today.getDay(); // Sun=0 .. Sat=6
-    const tosubtractdays = day === 0 ? -6 : 1 - day; // Monday as start
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + tosubtractdays);
-    const weekKey = monday.toISOString().split('T')[0];
+    // 2. Get the date keys using the unified logic
+    const { weekKey, dayIndex } = getCurrentWeekDetails();
 
-    // compute dayIndex where Monday=0, Sunday=6
-    const dayIndex = day === 0 ? 6 : day - 1;
+    tasksContainer.innerHTML = '<p>Loading today\'s tasks...</p>';
 
-    const res = await fetch(`/api/tasks/${weekKey}`, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) {
-      console.log('index-todo: fetch returned', res.status);
-      return null; // silently ignore errors (keep UI unchanged)
+    try {
+        // 3. Fetch data from the API
+        const response = await fetch(`/api/tasks/${weekKey}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status === 401) {
+             tasksContainer.innerHTML = '<p>Session expired. Please <a href="/login">log in</a> again.</p>';
+             localStorage.removeItem('token');
+             return;
+        }
+
+        if (!response.ok) {
+            // This happens if the week simply doesn't exist in the DB
+            tasksContainer.innerHTML = '<p>No tasks saved for this week.</p>';
+            return;
+        }
+
+        // 4. Extract tasks for the current day
+        const days = await response.json();
+        
+        // The day index key is a string (0=Mon, 6=Sun)
+        const todayTasks = days[String(dayIndex)] || [];
+
+        // 5. Render the tasks
+        renderTasks(todayTasks, tasksContainer);
+
+    } catch (error) {
+        console.error('Fetch error:', error);
+        tasksContainer.innerHTML = '<p>A network error occurred while fetching tasks.</p>';
     }
-    const days = await res.json();
-    // visible debug log for developers (no UI change)
-    console.log('index-todo fetched', { weekKey, dayIndex, days });
-
-    // Ensure we don't modify the existing header/paragraph — append a UL after them
-    let list = container.querySelector('ul.todo-list');
-    if (!list) {
-      list = document.createElement('ul');
-      list.className = 'todo-list';
-      container.appendChild(list);
-    }
-    list.innerHTML = '';
-
-    const todays = days && days[dayIndex] ? days[dayIndex] : [];
-    if (!todays.length) {
-      const li = document.createElement('li');
-      li.textContent = 'No tasks for today.';
-      li.className = 'todo-empty';
-      list.appendChild(li);
-      return days;
-    }
-
-    todays.forEach(task => {
-      const li = document.createElement('li');
-      const status = task.status ? ` [${task.status}]` : '';
-      li.textContent = `${task.text}${status}`;
-      list.appendChild(li);
-    });
-
-    return days;
-  } catch (e) {
-    // Keep UI untouched on any unexpected error
-    console.warn('todo widget error', e && e.message ? e.message : e);
-    return null;
-  }
 }
 
-// Expose helper for manual testing from DevTools
-window.fetchTodosForToday = fetchTodosForToday;
-
-// Auto-run on page load (keeps behaviour unchanged)
-document.addEventListener('DOMContentLoaded', () => { fetchTodosForToday().catch(() => {}); });
-
-// Dev-only visible trigger (hidden by default). Enable by setting localStorage.showTodoDev = '1'
-function maybeAddDevButton(){
-  try{
-    if (localStorage.getItem('showTodoDev') !== '1') return;
-    const container = document.getElementById('todo');
-    if (!container) return;
-    if (container.querySelector('.todo-dev-btn')) return; // already added
-    const btn = document.createElement('button');
-    btn.className = 'todo-dev-btn';
-    btn.style.marginTop = '8px';
-    btn.style.padding = '6px 10px';
-    btn.style.fontSize = '13px';
-    btn.textContent = 'Refresh To-Do (dev)';
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      const r = await fetchTodosForToday();
-      console.log('fetchTodosForToday (button) result:', r);
-      btn.disabled = false;
-    });
-    container.appendChild(btn);
-  }catch(e){ /* ignore */ }
-}
-
-document.addEventListener('DOMContentLoaded', () => { maybeAddDevButton(); });
+// Execute the function when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', loadCurrentDayTasks);
+window.addEventListener('pageshow', loadCurrentDayTasks); // <-- ADD THIS LINE
