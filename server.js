@@ -24,6 +24,11 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.disable("x-powered-by");
 
+// When running behind proxies (e.g., in some container hosts), the X-Forwarded-For
+// header may be set. Enable Express 'trust proxy' so middleware (rate limit)
+// can correctly interpret client IPs and avoid validation errors.
+app.set('trust proxy', true);
+
 // Disable helmet's built-in CSP so we can provide a nonce-based CSP per request
 app.use(helmet({ contentSecurityPolicy: false }));
 // Per-request CSP nonce + header. This allows us to keep a strict CSP while
