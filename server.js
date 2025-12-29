@@ -308,6 +308,61 @@ app.post('/login', async (req, res, next) => {
     res.json({ success: true, token, username: user.username, email: user.email });
   } catch (e) { next(e); }
 });
+// server.js
+app.get("/api/stats/summary", requireAuth, async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const now = new Date();
+    
+    // 1. Calculate the Monday-based weekKey (Consistent with planner.js)
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(now.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    const currentWeekKey = monday.toISOString().split('T')[0];
+
+    // 2. Fetch data specifically for this user
+    const currentWeek = await Week.findOne({ weekKey: currentWeekKey, user: userId }).lean();
+    const days = currentWeek?.days || {};
+
+    let done = 0, active = 0, lost = 0;
+    const weeklyCounts = { completed: [0,0,0,0,0,0,0], inprocess: [0,0,0,0,0,0,0], abandoned: [0,0,0,0,0,0,0] };
+    const dailyTotalTasks = [0,0,0,0,0,0,0];
+
+    // 3. Aggregate stats (Days "0" to "6")
+    for (let i = 0; i < 7; i++) {
+      const dayTasks = days[String(i)] || [];
+      dayTasks.forEach(task => {
+        const status = (task.status || '').toLowerCase().trim().replace(/\s+/g, '-');
+        dailyTotalTasks[i]++;
+        
+        if (status === 'completed') {
+          done++;
+          weeklyCounts.completed[i]++;
+        } else if (status === 'in-process') {
+          active++;
+          weeklyCounts.inprocess[i]++;
+        } else if (status === 'abandoned') {
+          lost++;
+          weeklyCounts.abandoned[i]++;
+        }
+      });
+    }
+
+    const total = done + active + lost;
+    const efficiency = total > 0 ? Math.round((done / total) * 100) : 0;
+    
+    // 4. Fetch all weeks for the Heatmap history
+    const allWeeks = await Week.find({ user: userId }).select('weekKey days').lean();
+
+    res.json({
+      stats: { done, active, lost, eff: `${efficiency}%` },
+      weeklyData: weeklyCounts,
+      dailyTotalTasks,
+      heatmapData: allWeeks
+    });
+  } catch (e) { next(e); }
+});
 
 // Error handler
 app.use((err, req, res, next) => {

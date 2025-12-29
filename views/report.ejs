@@ -1,71 +1,77 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Productivity Report</title>
+<link rel="stylesheet" href="/styles/report.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="<%= cspNonce %>"></script>
 
-  <!-- Bootstrap & Chart.js -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<div class="dashboard-body-container">
+    <div class="dashboard-wrapper">
+        <div class="hero-header">
+            <h1 class="flashy-title">ELITE PRODUCTIVITY INSIGHTS</h1>
+            <p class="hero-subtitle">Visualizing peak performance and consistency</p>
+        </div>
 
-  <style>
-    body { background:#f8f9fa; font-family:system-ui; color:#333; padding:20px; }
-    .card { border:none; border-radius:10px; box-shadow:0 1px 5px rgba(0,0,0,0.1); }
-    h5 { font-size:1rem; margin-bottom:.25rem; }
-    footer { font-size:.8rem; color:#777; text-align:center; margin-top:20px; }
-    canvas { max-height:200px; }
-  </style>
-</head>
-<body>
-  <div class="container small">
+        <div class="dashboard-grid">
+            <div class="card area-s1"><h1>Efficiency</h1><p class="num" id="efficiency">--%</p></div>
+            <div class="card area-s2"><h1>Completed</h1><p class="num green" id="completedCount">0</p></div>
+            <div class="card area-s3"><h1>In Process</h1><p class="num yellow" id="inProcessCount">0</p></div>
+            <div class="card area-s4"><h1>Abandoned</h1><p class="num red" id="abandonedCount">0</p></div>
 
-    <h4 class="text-center text-primary mb-3">📊 Productivity Report</h4>
-
-    <div class="row g-2 text-center mb-3">
-      <div class="col-4"><div class="card p-2"><h5 class="text-success">15</h5><small>Weekly Done</small></div></div>
-      <div class="col-4"><div class="card p-2"><h5 class="text-info">5</h5><small>Ongoing</small></div></div>
-      <div class="col-4"><div class="card p-2"><h5 class="text-danger">2</h5><small>Due</small></div></div>
+<div class="card area-heat">
+    <h1>Yearly Activity Streak</h1>
+    <p class="heatmap-hint">Hover over a box to see your progress!</p> 
+    
+    <div class="streak-wrapper">
+        <div id="heatmap" class="heatmap-grid"></div>
+        <div id="heatmap-tooltip" class="custom-tooltip"></div>
     </div>
-
-    <div class="card p-3 mb-3">
-      <h6 class="text-muted text-center">Weekly Tasks Overview</h6>
-      <canvas id="weeklyChart"></canvas>
+    
+    <div class="heatmap-legend">
+        <span class="legend-text">Low</span>
+        <div class="legend-dots">
+            <div class="dot lvl-0"></div><div class="dot lvl-1"></div><div class="dot lvl-2"></div><div class="dot lvl-3"></div><div class="dot lvl-4"></div>
+        </div>
+        <span class="legend-text">High</span>
     </div>
+</div>
 
-    <div class="card p-3">
-      <h6 class="text-muted text-center">Monthly Summary</h6>
-      <canvas id="monthlyChart"></canvas>
+<div class="card area-side">
+    <h1>Status Overview</h1>
+    <ul class="status-list">
+        <li><span class="dot-indicator green-bg"></span>Completed</li>
+        <li><span class="dot-indicator yellow-bg"></span>In-Process</li>
+        <li><span class="dot-indicator red-bg"></span>Abandoned</li>
+    </ul>
+    <div class="donut-fixed-box">
+        <canvas id="statusDonut"></canvas>
     </div>
+</div>
 
-    <footer>Updated: <span id="date"></span> • © 2025 Productivity Tracker</footer>
-  </div>
+            <div class="card area-line">
+                <h1 class="dash-h1">Weekly Task Overview</h1>
+                <div class="segmented-control mini-btns">
+                    <button class="seg-btn active" data-type="completed">Completed</button>
+                    <button class="seg-btn" data-type="inprocess">In Process</button>
+                    <button class="seg-btn" data-type="abandoned">Abandoned</button>
+                </div>
+                <div class="main-chart-box relative-box">
+                    <div class="y-title-container"><span class="axis-label-sync">Completion %</span></div>
+                    <div class="canvas-holder wide-canvas"><canvas id="lineChart"></canvas></div>
+                    <div class="dynamic-box corner-align">
+                        <span id="stat-type">Completed Avg:</span> 
+                        <span id="stat-val" class="green">--%</span>
+                    </div>
+                </div>
+                <div class="x-axis-footer axis-label-sync">Days of the Current Week</div>
+            </div>
 
-  <script nonce="<%= cspNonce %>">
-    document.getElementById("date").textContent = new Date().toLocaleDateString();
+            <div class="card area-bar">
+                <h1 class="dash-h1">Daily Task Distribution</h1>
+                <div class="main-chart-box padded-box">
+                    <div class="y-title-container"><span class="axis-label-sync">Total Tasks</span></div>
+                    <div class="canvas-holder wide-canvas"><canvas id="barChart"></canvas></div>
+                </div>
+                <div class="x-axis-footer axis-label-sync">Weekly Timeline Breakdown</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    new Chart(document.getElementById('weeklyChart'), {
-      type: 'bar',
-      data: {
-        labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-        datasets: [
-          { label:'Done', data:[3,2,1,4,2,1,2], backgroundColor:'rgba(25,135,84,.8)' },
-          { label:'Ongoing', data:[1,2,2,1,2,0,1], backgroundColor:'rgba(13,110,253,.7)' },
-          { label:'Due', data:[0,0,1,0,0,1,0], backgroundColor:'rgba(220,53,69,.7)' }
-        ]
-      },
-      options:{ responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
-    });
-
-    new Chart(document.getElementById('monthlyChart'), {
-      type: 'doughnut',
-      data: {
-        labels:['Completed','Ongoing','Due'],
-        datasets:[{ data:[70,20,10],
-          backgroundColor:['rgba(25,135,84,.8)','rgba(13,110,253,.7)','rgba(220,53,69,.7)'] }]
-      },
-      options:{ plugins:{legend:{position:'bottom'}} }
-    });
-  </script>
-</body>
-</html>
+<script src="/js/report.js" nonce="<%= cspNonce %>"></script>
