@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 <link rel="stylesheet" href="/index.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" nonce="<%= cspNonce %>">
 <!-- Poppins font for site -->
 <link href="/styles/poppins.css" rel="stylesheet">
 </head>
@@ -25,12 +26,17 @@
   </section>
 
   <!-- GUIDE -->
-  <section id="guide" class="page-section">
-
-    <h2>Guide / Tutorial</h2>
-    <p>📹 This is where your video will go later (we’ll add it at the end).</p>
-
-  </section>
+ <section id="guide" class="page-section">
+  <h2>Guide / Tutorial</h2>
+  <p class="guide-intro">Watch this quick video to see how you can make the most of FocusPanel.</p>
+  
+  <div class="video-container">
+    <video controls poster="/images/video-placeholder.png">
+      <source src="/videos/guide.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+</section>
   <section id="midbuttons"  class="page-section"> 
    
 <div class="mid">
@@ -54,11 +60,71 @@
 </section>
 
 <section id="features" class="page-section">
-<p>Our key features include:</p>
+  <h2 class="welcome-heading">Our Key Features</h2>
+  
+  <div class="fp-carousel-wrapper">
+    <div id="carouselExampleCaptions" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="0" class="active"></button>
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="1"></button>
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="2"></button>
+        <button type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide-to="3"></button>
+      </div>
+      
+      <div class="carousel-inner">
+        <div class="carousel-item active">
+          <div class="img-crop">
+            <img src="/images/weekly.png" class="d-block w-100" alt="Weekly">
+          </div>
+          <div class="custom-caption-below">
+            <h5>Weekly Tracker</h5>
+            <p>Plan your schedule and visualize progress across the week.</p>
+          </div>
+        </div>
+
+        <div class="carousel-item">
+          <div class="img-crop">
+            <img src="/images/notes.png" class="d-block w-100" alt="Notes">
+          </div>
+          <div class="custom-caption-below">
+            <h5>Notes</h5>
+            <p>Capture your thoughts and organize your daily tasks effectively.</p>
+          </div>
+        </div>
+
+        <div class="carousel-item">
+          <div class="img-crop">
+            <img src="/images/report.png" class="d-block w-100" alt="Report">
+          </div>
+          <div class="custom-caption-below">
+            <h5>Report</h5>
+            <p>Analyze your productivity trends with detailed analytics.</p>
+          </div>
+        </div>
+
+        <div class="carousel-item">
+          <div class="img-crop">
+            <img src="/images/pomodoro.png" class="d-block w-100" alt="Timer">
+          </div>
+          <div class="custom-caption-below">
+            <h5>Pomodoro Timer</h5>
+            <p>Boost your focus using timed work intervals and breaks.</p>
+          </div>
+        </div>
+      </div>
+
+      <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleCaptions" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+  </div>
 </section>
 
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" nonce="<%= cspNonce %>"></script>
 <script src="/js/index-todo.js" nonce="<%= cspNonce %>"></script>
 <script src="/js/animation.js" nonce="<%= cspNonce %>"></script>
 </body>
