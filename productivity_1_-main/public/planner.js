@@ -30,8 +30,11 @@ const right = document.getElementById('post-week');
 function formatWeekKey(date) {
 /* Format key as YYYY-MM-DD for week Monday */
 const monday = getPresentWeek(date);
-return monday.toISOString().split('T')[0];
-}
+const y = monday.getFullYear();
+const m = String(monday.getMonth() + 1).padStart(2, '0');
+const day = String(monday.getDate()).padStart(2, '0');
+return `${y}-${m}-${day}`;
+} 
 
 function updateWeek() {
 const monday = getPresentWeek(date);

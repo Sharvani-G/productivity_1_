@@ -10,17 +10,24 @@ import { updateWeekUI } from "./ui.js";
 window.tasksByWeek = {};
 window.currentDate = new Date();
 
+function formatDateLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function getMonday(date) {
   const d = new Date(date);
   const day = d.getDay();
   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
   return new Date(d.setDate(diff));
-}
+} 
 
 async function init() {
   const monday = getMonday(window.currentDate);
-  const weekKey = monday.toISOString().split("T")[0];
-  window.currentWeekKey = weekKey;
+  const weekKey = formatDateLocal(monday);
+  window.currentWeekKey = weekKey; 
 
   window.tasksByWeek[weekKey] = window.tasksByWeek[weekKey] || {};
 
@@ -33,7 +40,7 @@ init();
 
 window.loadAndRenderWeek = async function (dateObj) {
   const monday = getMonday(dateObj);
-  const weekKey = monday.toISOString().split("T")[0];
+  const weekKey = formatDateLocal(monday);
   window.currentWeekKey = weekKey;
 
   window.tasksByWeek[weekKey] = window.tasksByWeek[weekKey] || {};

@@ -17,8 +17,11 @@ export function getPresentWeek(date) {
 // Format YYYY-MM-DD
 export function formatWeekKey(date) {
   const monday = getPresentWeek(date);
-  return monday.toISOString().split("T")[0];
-}
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, '0');
+  const day = String(monday.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+} 
 
 // Helper: show loading/error messages
 function showMessage(message, type = "info") {

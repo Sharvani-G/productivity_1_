@@ -8,8 +8,11 @@ function getWeekKeyAndDayIndex(date = new Date()){
   const tosubtractdays = day === 0 ? -6 : 1 - day; // monday start
   const monday = new Date(date);
   monday.setDate(date.getDate() + tosubtractdays);
-  const weekKey = monday.toISOString().split('T')[0];
-  const dayIndex = day === 0 ? 6 : day - 1;
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(monday.getDate()).padStart(2, '0');
+  const weekKey = `${y}-${m}-${dayOfMonth}`;
+  const dayIndex = day === 0 ? 6 : day - 1; 
   return { weekKey, dayIndex };
 }
 

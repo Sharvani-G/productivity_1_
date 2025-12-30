@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests (check weekKey)
+        run: npm test
+
+  # Optional smoke job that runs only when MONGODB_URI is provided in repository secrets
+  smoke:
+    if: ${{ secrets.MONGODB_URI }}
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: npm ci
+      - name: Start server in background
+        env:
+          PORT: 4001
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          nohup node server.js &
+          sleep 2
+      - name: Run smoke API tests
+        env:
+          PORT: 4001
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          node scripts/smoke_api.js
+          node scripts/smoke_persistence.js
+          node scripts/smoke_report.js

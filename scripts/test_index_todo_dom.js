@@ -22,8 +22,11 @@ async function run(){
   const tosubtractdays = day === 0 ? -6 : 1 - day;
   const monday = new Date(today);
   monday.setDate(today.getDate() + tosubtractdays);
-  const weekKey = monday.toISOString().split('T')[0];
-  const dayIndex = day === 0 ? 6 : day - 1;
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, '0');
+  const dayOfMonth = String(monday.getDate()).padStart(2, '0');
+  const weekKey = `${y}-${m}-${dayOfMonth}`;
+  const dayIndex = day === 0 ? 6 : day - 1; 
 
   // create a task for today via API
   const days = { [String(dayIndex)]: [{ id: 'dom1', text: 'DOM test task', status: 'open' }] };
@@ -33,31 +36,34 @@ async function run(){
   const scriptPath = path.join(process.cwd(), 'public', 'js', 'index-todo.js');
   const scriptSrc = fs.readFileSync(scriptPath, 'utf8');
 
-  const html = `<section id="todo"><h2>To-Do List</h2><p>Manage your tasks efficiently with our to-do list feature.</p></section>`;
+  const html = `<section id="todo"><h2>To-Do List</h2><div id="current-day-tasks"></div></section>`;
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: base });
 
-  // make fetch available inside JSDOM to call our running server
-  dom.window.fetch = global.fetch;
-
-  // ensure fetch resolves relative URLs against our base URL
+  // make fetch available inside JSDOM to call our running server and resolve relative URLs
   dom.window.fetch = (u, opts) => global.fetch(new URL(u, base).toString(), opts);
 
-  // set auth token in localStorage BEFORE evaluating so auto-run sees it
-  dom.window.localStorage.setItem('authToken', token);
+  // set auth token in localStorage BEFORE evaluating so auto-run sees it (index-todo uses key 'token')
+  dom.window.localStorage.setItem('token', token);
 
-  // evaluate the client script inside the JSDOM window (it auto-runs on DOMContentLoaded)
+  // evaluate the client script inside the JSDOM window (it listens for DOMContentLoaded)
   dom.window.eval(scriptSrc);
 
-  // call the exposed helper to populate the DOM (in case auto-run didn't fire)
-  const res = await dom.window.fetchTodosForToday();
-  if (!res) throw new Error('fetchTodosForToday returned null or undefined');
+  // Manually dispatch DOMContentLoaded so the script's loadToday runs in JSDOM
+  dom.window.document.dispatchEvent(new dom.window.Event('DOMContentLoaded'));
 
-  const list = dom.window.document.querySelector('#todo ul.todo-list');
-  if (!list) throw new Error('todo list element not present');
-  const items = Array.from(list.querySelectorAll('li')).map(li => li.textContent.trim());
-  if (!items.some(t => t.includes('DOM test task'))) throw new Error('Expected task not found in list: ' + JSON.stringify(items));
+  // give the script a short time to fetch and render
+  await new Promise((r) => setTimeout(r, 250));
 
-  console.log('✅ DOM index-todo test passed — list contains:', items);
+  // verify the tasks were rendered into the container
+  const container = dom.window.document.getElementById('current-day-tasks');
+  if (!container) throw new Error('current-day-tasks container not found');
+  const items = container.querySelectorAll('li');
+  if (!items.length) throw new Error('No tasks rendered for today');
+  const texts = Array.from(items).map(n => n.textContent.trim());
+  if (!texts.some(t => t.includes('DOM test task'))) throw new Error('Expected task not found: ' + JSON.stringify(texts));
+  console.log('✅ DOM index-todo test passed — list contains:', texts);
+
+
 }
 
 run().catch(err => { console.error('DOM index-todo test failed', err && err.message ? err.message : err); process.exit(1); });

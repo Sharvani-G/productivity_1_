@@ -27,7 +27,9 @@ app.disable("x-powered-by");
 // When running behind proxies (e.g., in some container hosts), the X-Forwarded-For
 // header may be set. Enable Express 'trust proxy' so middleware (rate limit)
 // can correctly interpret client IPs and avoid validation errors.
-app.set('trust proxy', true);
+// Explicitly set to `1` to avoid permissive/trusty behavior which newer express-rate-limit
+// treats as insecure and throws. See: https://express-rate-limit.github.io/ERR_ERL_PERMISSIVE_TRUST_PROXY/
+app.set('trust proxy', 1);
 
 // Disable helmet's built-in CSP so we can provide a nonce-based CSP per request
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -81,6 +83,13 @@ function requireAuth(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 }
+
+function formatDateLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+} 
 
 // Protect API routes for tasks - ensure requests include a valid token
 app.use('/api/tasks', requireAuth);
@@ -319,7 +328,7 @@ app.get("/api/stats/summary", requireAuth, async (req, res, next) => {
     const diff = now.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(now.setDate(diff));
     monday.setHours(0, 0, 0, 0);
-    const currentWeekKey = monday.toISOString().split('T')[0];
+    const currentWeekKey = formatDateLocal(monday);
 
     // 2. Fetch data specifically for this user
     const currentWeek = await Week.findOne({ weekKey: currentWeekKey, user: userId }).lean();
