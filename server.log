@@ -1,5 +1,0 @@
-[dotenv@17.2.3] injecting env (2) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
-✅ Server running at http://localhost:4001
-✅ MongoDB connected
-ℹ️ Dropping legacy unique index weekKey_1 to enable per-user weeks
-✅ Dropped legacy weekKey_1 index
