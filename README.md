@@ -137,7 +137,21 @@ MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/productivity
 MONGODB_DB=productivity
 PORT=4000
 API=your-api-ninjas-key-here
+# Gmail account (use app-password, not regular password) for daily notifications
+EMAIL_USER=your_gmail@example.com
+EMAIL_PASS=your_16_digit_app_password
+# Optional: set to ENABLE_TEST_EMAIL_ROUTE=true to enable a temporary /test-email route for testing
 ```
+
+## 📬 Daily Email Notifications
+
+To enable daily email summaries for users:
+
+1. Add `EMAIL_USER` and `EMAIL_PASS` (Gmail app password) to your `.env` (see `.env.example`).
+2. For immediate testing, set `ENABLE_TEST_EMAIL_ROUTE=true` in `.env`, then restart the server.
+3. In the app, switch to Last Week, add at least one task to Yesterday's column and Save.
+4. Open your browser to `http://localhost:4000/test-email` to trigger the job and check server logs + inbox.
+5. After testing, unset `ENABLE_TEST_EMAIL_ROUTE` (or set it to `false`) and restart the server.
 
 ## 🧪 Testing
 

@@ -13,6 +13,8 @@ import xss from "xss-clean";
 
 import Week from "./models/Week.js";
 import User from "./models/User.js";
+import cron from "node-cron";
+import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -381,3 +383,111 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
+
+// 🔧 Daily Email Notifications
+// - Requires EMAIL_USER and EMAIL_PASS in .env (Gmail app password)
+// - Optional: set ENABLE_TEST_EMAIL_ROUTE=true to enable an ephemeral /test-email route
+const emailEnabled = !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS;
+let transporter = null;
+if (emailEnabled) {
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+} else {
+  console.warn('⚠️ Email credentials (EMAIL_USER/EMAIL_PASS) not set. Daily notifications are disabled.');
+}
+
+// Core notification function (exported for manual triggering/testing)
+async function sendDailyNotifications() {
+  console.log('--- Starting Daily Notification Process ---');
+  if (!transporter) {
+    console.log('Email transporter not configured; aborting notifications.');
+    return;
+  }
+
+  try {
+    const users = await User.find({});
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    // Calculate Task Index (Mon=0...Sun=6)
+    const jsDay = yesterday.getDay();
+    const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
+
+    // Calculate WeekKey for Yesterday (consistent with existing logic)
+    const tempDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+    const dayOfYesterday = tempDate.getDay();
+    const diff = tempDate.getDate() - dayOfYesterday + (dayOfYesterday === 0 ? -6 : 1);
+    const monday = new Date(tempDate.setDate(diff));
+    const weekKey = formatDateLocal(monday); // Uses your existing function
+
+    for (const user of users) {
+      const weekDoc = await Week.findOne({ weekKey, user: user._id });
+      const tasks = (weekDoc && weekDoc.days && weekDoc.days[String(dayIndex)]) || [];
+
+      if (!tasks || tasks.length === 0) continue;
+
+      const taskHtml = tasks.map(t => `
+        <li style="margin-bottom:8px;">
+          <strong style="color: ${t.status === 'Completed' ? '#22c55e' : '#ef4444'}">${t.text}</strong> 
+          - Status: ${t.status || 'No Status'}
+        </li>`).join('');
+
+      console.log(`Preparing to send email to ${user.email} with ${tasks.length} task(s)`);
+      try {
+        const info = await transporter.sendMail({
+          from: '"FocusPanel" <no-reply@focuspanel.com>',
+          to: user.email,
+          subject: `Your Tasks Summary for Yesterday (${yesterday.toDateString()})`,
+          html: `<h3>Hello ${user.username},</h3>
+                 <p>Here is how you did yesterday:</p>
+                 <ul>${taskHtml}</ul>
+                 <p>Log in to <a href="https://your-app-url.com">FocusPanel</a> to stay productive today!</p>`
+        });
+        console.log(`sendMail result for ${user.email}: accepted=${JSON.stringify(info.accepted)} rejected=${JSON.stringify(info.rejected)} response=${info.response}`);
+      } catch (err) {
+        console.error(`sendMail failed for ${user.email}:`, err);
+      }
+    }
+    console.log('--- All Notifications Sent Successfully ---');
+  } catch (err) {
+    console.error('Notification Job Failed:', err);
+  }
+}
+
+// Schedule for 12:00 PM Daily (Asia/Kolkata)
+if (emailEnabled) {
+  cron.schedule('0 12 * * *', sendDailyNotifications, {
+    timezone: "Asia/Kolkata"
+  });
+}
+
+// Optional test route (enable by setting ENABLE_TEST_EMAIL_ROUTE=true in .env)
+if (process.env.ENABLE_TEST_EMAIL_ROUTE === 'true') {
+  app.get("/test-email", async (req, res) => {
+    await sendDailyNotifications();
+    res.send("Notification job triggered. Check the server console and your inbox.");
+  });
+}
+
+// Export for immediate testing
+export { sendDailyNotifications };
+
+// Optional: Run notifications once on startup if SEND_NOTIFICATIONS_ON_START=true
+// This is opt-in to avoid unexpected emails in production. It will only run when
+// EMAIL credentials are configured and the env flag is explicitly set.
+if (process.env.SEND_NOTIFICATIONS_ON_START === 'true' && emailEnabled) {
+  if (!global._notificationsStarted) {
+    global._notificationsStarted = true;
+    console.log('🔔 SEND_NOTIFICATIONS_ON_START enabled — sending notifications now...');
+    // small delay to allow the server to finish initialization
+    setTimeout(() => {
+      sendDailyNotifications().catch(err => console.error('Startup notification failed:', err));
+    }, 1000);
+  }
+}  
