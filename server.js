@@ -13,10 +13,12 @@ import xss from "xss-clean";
 
 import Week from "./models/Week.js";
 import User from "./models/User.js";
+import Note from "./models/Note.js"; // Added from secondary version
 import cron from "node-cron";
 import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import axios from "axios"; 
 
 dotenv.config();
 
@@ -26,29 +28,19 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.disable("x-powered-by");
 
-// When running behind proxies (e.g., in some container hosts), the X-Forwarded-For
-// header may be set. Enable Express 'trust proxy' so middleware (rate limit)
-// can correctly interpret client IPs and avoid validation errors.
-// Explicitly set to `1` to avoid permissive/trusty behavior which newer express-rate-limit
-// treats as insecure and throws. See: https://express-rate-limit.github.io/ERR_ERL_PERMISSIVE_TRUST_PROXY/
 app.set('trust proxy', 1);
 
-// Disable helmet's built-in CSP so we can provide a nonce-based CSP per request
+// Security: Helmet + Custom CSP with Nonce
 app.use(helmet({ contentSecurityPolicy: false }));
-// Per-request CSP nonce + header. This allows us to keep a strict CSP while
-// permitting necessary inline scripts by adding a nonce attribute to them.
 app.use((req, res, next) => {
   try {
     const nonce = crypto.randomBytes(16).toString("base64");
-    // expose to EJS templates as `cspNonce`
     res.locals.cspNonce = nonce;
 
     const directives = [
       "default-src 'self'",
-      // allow scripts from self, CDN, and inline scripts carrying the nonce
       `script-src 'self' 'nonce-${nonce}' https://cdn.jsdelivr.net`,
-      // styles: allow self, CDN, Google Fonts and allow inline styles for small in-template styles
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
       "img-src 'self' data:",
       "connect-src 'self' https://cdn.jsdelivr.net",
       "font-src 'self'",
@@ -56,13 +48,12 @@ app.use((req, res, next) => {
 
     res.setHeader('Content-Security-Policy', directives.join('; '));
   } catch (e) {
-    // if nonce generation fails, continue without setting CSP (safer to fail open here)
     console.error('CSP nonce generation failed', e);
   }
   next();
 });
+
 app.use(compression());
-// app.use(mongoSanitize());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));
 
 app.use(express.json({ limit: "1mb" }));
@@ -72,7 +63,9 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// Simple auth middleware: validate Bearer token and attach `req.user`
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-this";
+
+// Simple auth middleware
 function requireAuth(req, res, next) {
   const auth = req.get('authorization') || req.get('Authorization');
   if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
@@ -93,10 +86,10 @@ function formatDateLocal(d) {
   return `${y}-${m}-${day}`;
 } 
 
-// Protect API routes for tasks - ensure requests include a valid token
+// Protect API routes
 app.use('/api/tasks', requireAuth);
 
-// connect to db 
+// Database connection
 const MONGODB_URI = process.env.MONGODB_URI || "";
 if (!MONGODB_URI) {
   console.warn("⚠️  MONGODB_URI is not set. Set it in .env");
@@ -106,62 +99,45 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// After connecting, ensure old single-field unique index on weekKey is removed
-// so we can enforce per-user uniqueness (compound index user+weekKey).
+// MongoDB Index Management (from Main Version)
 mongoose.connection.once('open', async () => {
   try {
     const coll = mongoose.connection.db.collection('weeks');
     const indexes = await coll.indexes();
     const hasWeekKeyUnique = indexes.some(ix => ix.name === 'weekKey_1');
     if (hasWeekKeyUnique) {
-      console.log('ℹ️ Dropping legacy unique index weekKey_1 to enable per-user weeks');
+      console.log('ℹ️ Dropping legacy unique index weekKey_1');
       await coll.dropIndex('weekKey_1');
-      console.log('✅ Dropped legacy weekKey_1 index');
     }
-    // If there's an existing user+weekKey index that enforces uniqueness on null users
-    // (i.e., it lacks a partialFilterExpression), drop it and recreate it with
-    // partialFilterExpression: { user: { $exists: true } } so that only docs with
-    // a user will be constrained to uniqueness.
     const uwIndex = indexes.find(ix => {
       const kp = ix.key || ix.keyPattern || {};
-      // match either 'user' or legacy 'userId'
       const hasUserKey = Object.keys(kp).some(k => k === 'user' || k === 'userId');
       return hasUserKey && kp.weekKey === 1;
     });
     if (uwIndex && !uwIndex.partialFilterExpression) {
-      console.log('ℹ️ Found non-partial user+weekKey index, replacing with partial index');
+      console.log('ℹ️ Found non-partial user+weekKey index, replacing...');
       try {
         await coll.dropIndex(uwIndex.name);
-      } catch (e) { console.warn('dropIndex failed', e.message || e); }
-      // create a proper partial unique index on `user` + `weekKey`
+      } catch (e) { console.warn('dropIndex failed', e.message); }
       await coll.createIndex({ user: 1, weekKey: 1 }, { unique: true, partialFilterExpression: { user: { $exists: true } }, name: 'user_week_partial' });
-      console.log('✅ Recreated user-week partial unique index as user_week_partial');
+      console.log('✅ Recreated user-week partial unique index');
     }
-    // Some older deployments used 'userId' in index names (e.g. userId_1_weekKey_1)
-    // or left behind single-field userId indexes. Drop any such legacy indexes
-    // to avoid uniqueness conflicts caused by documents with null users.
     for (const ix of indexes) {
-      if (!ix.name) continue;
-      if (ix.name.includes('userId')) {
+      if (ix.name && ix.name.includes('userId')) {
         try {
-          console.log(`ℹ️ Dropping legacy index ${ix.name}`);
           await coll.dropIndex(ix.name);
           console.log(`✅ Dropped legacy index ${ix.name}`);
-        } catch (e) {
-          console.warn(`Failed to drop legacy index ${ix.name}`, e.message || e);
-        }
+        } catch (e) { console.warn(`Failed to drop legacy index ${ix.name}`, e.message); }
       }
     }
   } catch (e) {
-    // non-fatal: log and continue
-    console.warn('Index cleanup warning:', e.message || e);
+    console.warn('Index cleanup warning:', e.message);
   }
 });
 
-// API
+// --- TASK API ---
 app.get("/api/tasks/:weekKey", async (req, res, next) => {
   try {
-    // user-specific fetch
     const userId = req.user && req.user.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const doc = await Week.findOne({ weekKey: req.params.weekKey, user: userId }).lean();
@@ -169,21 +145,18 @@ app.get("/api/tasks/:weekKey", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-//first updation of day task inside particular weekkey
-
 app.post("/api/tasks/:weekKey", async (req, res, next) => {
   try {
     const { weekKey } = req.params;
     const { days } = req.body;
     if (typeof days !== "object" || Array.isArray(days)) {
-      return res.status(400).json({ error: "Invalid payload: 'days' must be an object" });
+      return res.status(400).json({ error: "Invalid payload" });
     }
     const userId = req.user && req.user.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    // upsert only for this user + weekKey
     const updated = await Week.findOneAndUpdate(
-      { weekKey, user: userId }, // filter
+      { weekKey, user: userId },
       { $set: { days, updatedAt: new Date() }, $setOnInsert: { user: userId } },
       { upsert: true, new: true }
     ).lean();
@@ -198,17 +171,11 @@ app.delete("/api/tasks/:weekKey/:dayIndex/:taskId", async (req, res, next) => {
     const userId = req.user && req.user.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
     const doc = await Week.findOne({ weekKey, user: userId });
-    //check if doc exists and dayIndex exists
-    if (!doc || !doc.days[dayIndex]) {
-      return res.status(404).json({ error: "Week or day not found" });
-    }
- //filters all tasks and separates all tasks from the to be deleted one
+    if (!doc || !doc.days[dayIndex]) return res.status(404).json({ error: "Not found" });
+    
     doc.days[dayIndex] = doc.days[dayIndex].filter(t => t.id !== taskId);
-  // markModified so Mongoose knows to persist changes to the mixed 'days' field
-  //doc i mongoose document, markModified is mongoose method we are checking if that method exists
-  if (typeof doc.markModified === 'function') doc.markModified('days');
-  await doc.save();
-
+    if (typeof doc.markModified === 'function') doc.markModified('days');
+    await doc.save();
     res.json({ success: true, days: doc.days });
   } catch (e) { next(e); }
 });
@@ -217,25 +184,18 @@ app.put("/api/tasks/:weekKey/:dayIndex/:taskId", async (req, res, next) => {
   try {
     const { weekKey, dayIndex, taskId } = req.params;
     const { text, status } = req.body;
-
     const userId = req.user && req.user.id;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const doc = await Week.findOne({ weekKey, user: userId });
-    
-    if (!doc || !doc.days[dayIndex]) {
-      return res.status(404).json({ error: "Week or day not found" });
-    }
+    if (!doc || !doc.days[dayIndex]) return res.status(404).json({ error: "Not found" });
 
     const taskIndex = doc.days[dayIndex].findIndex(t => t.id === taskId);
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: "Task not found" });
-    }
+    if (taskIndex === -1) return res.status(404).json({ error: "Task not found" });
 
-  doc.days[dayIndex][taskIndex] = { id: taskId, text, status };
-  // markModified so Mongoose persists updates to the mixed 'days' field
-  if (typeof doc.markModified === 'function') doc.markModified('days');
-  await doc.save();
+    doc.days[dayIndex][taskIndex] = { id: taskId, text, status };
+    if (typeof doc.markModified === 'function') doc.markModified('days');
+    await doc.save();
 
     res.json({ success: true, task: doc.days[dayIndex][taskIndex] });
   } catch (e) { next(e); }
@@ -250,25 +210,87 @@ app.delete("/api/tasks/:weekKey", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Pages (render existing ejs files if present)
-import axios from "axios"; // make sure this is at the top with other imports
+// --- NOTES API (Merged from Secondary Version) ---
+app.get("/api/notes", requireAuth, async (req, res, next) => {
+  try {
+    const notes = await Note.find({ user: req.user.id }).sort({ createdAt: -1 }).lean();
+    res.json(notes);
+  } catch (e) { next(e); }
+});
 
+app.post("/api/notes", requireAuth, async (req, res, next) => {
+  try {
+    const { text, category, tags, color, todos } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Note text is required' });
+    }
+    const note = new Note({
+      user: req.user.id,
+      text: text.trim(),
+      category: category || 'General',
+      tags: tags || [],
+      color: color || '#2563eb',
+      todos: todos || [],
+      pinned: false
+    });
+    await note.save();
+    res.json(note);
+  } catch (e) { next(e); }
+});
+
+app.get("/api/notes/:id", requireAuth, async (req, res, next) => {
+  try {
+    const note = await Note.findOne({ _id: req.params.id, user: req.user.id }).lean();
+    if (!note) return res.status(404).json({ error: 'Note not found' });
+    res.json(note);
+  } catch (e) { next(e); }
+});
+
+app.put("/api/notes/:id", requireAuth, async (req, res, next) => {
+  try {
+    const { text, category, tags, color, pinned, todos } = req.body;
+    const updateData = {};
+    if (text !== undefined) updateData.text = text.trim();
+    if (category !== undefined) updateData.category = category;
+    if (tags !== undefined) updateData.tags = tags;
+    if (color !== undefined) updateData.color = color;
+    if (pinned !== undefined) updateData.pinned = pinned;
+    if (todos !== undefined) updateData.todos = todos;
+
+    const note = await Note.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { $set: updateData },
+      { new: true }
+    ).lean();
+    if (!note) return res.status(404).json({ error: 'Note not found' });
+    res.json(note);
+  } catch (e) { next(e); }
+});
+
+app.delete("/api/notes/:id", requireAuth, async (req, res, next) => {
+  try {
+    const result = await Note.deleteOne({ _id: req.params.id, user: req.user.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Note not found' });
+    res.json({ success: true });
+  } catch (e) { next(e); }
+});
+
+// --- PAGES ---
 app.get("/", async (req, res) => {
   try {
     const response = await axios.get("https://api.api-ninjas.com/v1/quotes", {
       headers: { "X-Api-Key": process.env.API },
     });
-
-    const data = response.data[0]; // API returns array with one quote
+    const data = response.data[0];
     res.render("index.ejs", { content: data });
-  } 
-  catch (error) {
+  } catch (error) {
     console.error(error);
     res.render("index.ejs", {
       content: { quote: "Failed to load quote 😢", author: "Unknown" },
     });
   }
 });
+
 app.get("/weekly", (req, res) => res.render("weekly"));
 app.get("/login", (req, res) => res.render("login"));
 app.get("/signup", (req, res) => res.render("signup"));
@@ -276,16 +298,12 @@ app.get("/report", (req, res) => res.render("report"));
 app.get("/notes", (req, res) => res.render("notes"));
 app.get("/pomodoro", (req, res) => res.render("pomodoro"));
 
-// Auth endpoints: POST /signup and POST /login
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-this";
-
-// Signup: create user and return token
+// --- AUTH ENDPOINTS ---
 app.post('/signup', async (req, res, next) => {
   try {
     const { email, username, password } = req.body || {};
     if (!email || !username || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
 
-    // password policy: 6+ chars, at least one letter and one number
     const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
     if (!passwordPattern.test(password)) {
       return res.status(400).json({ success: false, message: 'Password does not meet requirements' });
@@ -303,36 +321,32 @@ app.post('/signup', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// Login: validate and return token
 app.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials' });
-
-    const ok = await user.validatePassword(password);
-    if (!ok) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    if (!user || !(await user.validatePassword(password))) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
 
     const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ success: true, token, username: user.username, email: user.email });
   } catch (e) { next(e); }
 });
-// server.js
+
+// --- STATS SUMMARY ---
 app.get("/api/stats/summary", requireAuth, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const now = new Date();
-    
-    // 1. Calculate the Monday-based weekKey (Consistent with planner.js)
     const day = now.getDay();
     const diff = now.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(now.setDate(diff));
     monday.setHours(0, 0, 0, 0);
     const currentWeekKey = formatDateLocal(monday);
 
-    // 2. Fetch data specifically for this user
     const currentWeek = await Week.findOne({ weekKey: currentWeekKey, user: userId }).lean();
     const days = currentWeek?.days || {};
 
@@ -340,30 +354,19 @@ app.get("/api/stats/summary", requireAuth, async (req, res, next) => {
     const weeklyCounts = { completed: [0,0,0,0,0,0,0], inprocess: [0,0,0,0,0,0,0], abandoned: [0,0,0,0,0,0,0] };
     const dailyTotalTasks = [0,0,0,0,0,0,0];
 
-    // 3. Aggregate stats (Days "0" to "6")
     for (let i = 0; i < 7; i++) {
       const dayTasks = days[String(i)] || [];
       dayTasks.forEach(task => {
         const status = (task.status || '').toLowerCase().trim().replace(/\s+/g, '-');
         dailyTotalTasks[i]++;
-        
-        if (status === 'completed') {
-          done++;
-          weeklyCounts.completed[i]++;
-        } else if (status === 'in-process') {
-          active++;
-          weeklyCounts.inprocess[i]++;
-        } else if (status === 'abandoned') {
-          lost++;
-          weeklyCounts.abandoned[i]++;
-        }
+        if (status === 'completed') { done++; weeklyCounts.completed[i]++; }
+        else if (status === 'in-process') { active++; weeklyCounts.inprocess[i]++; }
+        else if (status === 'abandoned') { lost++; weeklyCounts.abandoned[i]++; }
       });
     }
 
     const total = done + active + lost;
     const efficiency = total > 0 ? Math.round((done / total) * 100) : 0;
-    
-    // 4. Fetch all weeks for the Heatmap history
     const allWeeks = await Week.find({ user: userId }).select('weekKey days').lean();
 
     res.json({
@@ -384,30 +387,16 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`✅ Server running at http://localhost:${PORT}`));
 
-// 🔧 Daily Email Notifications
-// - Requires EMAIL_USER and EMAIL_PASS in .env (Gmail app password)
-// - Optional: set ENABLE_TEST_EMAIL_ROUTE=true to enable an ephemeral /test-email route
+// --- NOTIFICATIONS & CRON ---
 const emailEnabled = !!process.env.EMAIL_USER && !!process.env.EMAIL_PASS;
-let transporter = null;
-if (emailEnabled) {
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-} else {
-  console.warn('⚠️ Email credentials (EMAIL_USER/EMAIL_PASS) not set. Daily notifications are disabled.');
-}
+let transporter = emailEnabled ? nodemailer.createTransport({
+  service: 'gmail',
+  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
+}) : null;
 
-// Core notification function (exported for manual triggering/testing)
 async function sendDailyNotifications() {
   console.log('--- Starting Daily Notification Process ---');
-  if (!transporter) {
-    console.log('Email transporter not configured; aborting notifications.');
-    return;
-  }
+  if (!transporter) return;
 
   try {
     const users = await User.find({});
@@ -415,79 +404,52 @@ async function sendDailyNotifications() {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
 
-    // Calculate Task Index (Mon=0...Sun=6)
     const jsDay = yesterday.getDay();
     const dayIndex = jsDay === 0 ? 6 : jsDay - 1;
 
-    // Calculate WeekKey for Yesterday (consistent with existing logic)
     const tempDate = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-    const dayOfYesterday = tempDate.getDay();
-    const diff = tempDate.getDate() - dayOfYesterday + (dayOfYesterday === 0 ? -6 : 1);
-    const monday = new Date(tempDate.setDate(diff));
-    const weekKey = formatDateLocal(monday); // Uses your existing function
+    const dDiff = tempDate.getDate() - tempDate.getDay() + (tempDate.getDay() === 0 ? -6 : 1);
+    const monday = new Date(tempDate.setDate(dDiff));
+    const weekKey = formatDateLocal(monday);
 
     for (const user of users) {
       const weekDoc = await Week.findOne({ weekKey, user: user._id });
       const tasks = (weekDoc && weekDoc.days && weekDoc.days[String(dayIndex)]) || [];
+      if (!tasks.length) continue;
 
-      if (!tasks || tasks.length === 0) continue;
+      const taskHtml = tasks.map(t => `<li style="margin-bottom:8px;"><strong style="color: ${t.status === 'Completed' ? '#22c55e' : '#ef4444'}">${t.text}</strong> - Status: ${t.status || 'No Status'}</li>`).join('');
 
-      const taskHtml = tasks.map(t => `
-        <li style="margin-bottom:8px;">
-          <strong style="color: ${t.status === 'Completed' ? '#22c55e' : '#ef4444'}">${t.text}</strong> 
-          - Status: ${t.status || 'No Status'}
-        </li>`).join('');
-
-      console.log(`Preparing to send email to ${user.email} with ${tasks.length} task(s)`);
       try {
-        const info = await transporter.sendMail({
+        await transporter.sendMail({
           from: '"FocusPanel" <no-reply@focuspanel.com>',
           to: user.email,
           subject: `Your Tasks Summary for Yesterday (${yesterday.toDateString()})`,
-          html: `<h3>Hello ${user.username},</h3>
-                 <p>Here is how you did yesterday:</p>
-                 <ul>${taskHtml}</ul>
-                 <p>Log in to <a href="https://your-app-url.com">FocusPanel</a> to stay productive today!</p>`
+          html: `<h3>Hello ${user.username},</h3><p>Here is how you did yesterday:</p><ul>${taskHtml}</ul><p>Log in to <a href="https://your-app-url.com">FocusPanel</a> to stay productive today!</p>`
         });
-        console.log(`sendMail result for ${user.email}: accepted=${JSON.stringify(info.accepted)} rejected=${JSON.stringify(info.rejected)} response=${info.response}`);
-      } catch (err) {
-        console.error(`sendMail failed for ${user.email}:`, err);
-      }
+      } catch (err) { console.error(`sendMail failed for ${user.email}:`, err); }
     }
-    console.log('--- All Notifications Sent Successfully ---');
-  } catch (err) {
-    console.error('Notification Job Failed:', err);
-  }
+    console.log('--- All Notifications Sent ---');
+  } catch (err) { console.error('Notification Job Failed:', err); }
 }
 
-// Schedule for 12:00 PM Daily (Asia/Kolkata)
 if (emailEnabled) {
-  cron.schedule('0 12 * * *', sendDailyNotifications, {
-    timezone: "Asia/Kolkata"
-  });
+  cron.schedule('0 12 * * *', sendDailyNotifications, { timezone: "Asia/Kolkata" });
 }
 
-// Optional test route (enable by setting ENABLE_TEST_EMAIL_ROUTE=true in .env)
 if (process.env.ENABLE_TEST_EMAIL_ROUTE === 'true') {
   app.get("/test-email", async (req, res) => {
     await sendDailyNotifications();
-    res.send("Notification job triggered. Check the server console and your inbox.");
+    res.send("Notification job triggered.");
   });
 }
 
-// Export for immediate testing
 export { sendDailyNotifications };
 
-// Optional: Run notifications once on startup if SEND_NOTIFICATIONS_ON_START=true
-// This is opt-in to avoid unexpected emails in production. It will only run when
-// EMAIL credentials are configured and the env flag is explicitly set.
 if (process.env.SEND_NOTIFICATIONS_ON_START === 'true' && emailEnabled) {
   if (!global._notificationsStarted) {
     global._notificationsStarted = true;
-    console.log('🔔 SEND_NOTIFICATIONS_ON_START enabled — sending notifications now...');
-    // small delay to allow the server to finish initialization
     setTimeout(() => {
       sendDailyNotifications().catch(err => console.error('Startup notification failed:', err));
     }, 1000);
   }
-}  
+}

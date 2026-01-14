@@ -1,0 +1,18 @@
+.note-card{ display:flex; justify-content:space-between; align-items:flex-start; padding:12px; border-radius:10px; box-shadow:0 4px 12px rgba(2,6,23,0.04); background:var(--card); border-left:4px solid #2563eb }
+.note-left{ display:flex; flex-direction:column; gap:6px; align-items:flex-start; flex:1 }
+.note-text{ white-space:pre-wrap; word-break:break-word }
+.note-actions{ display:flex; gap:8px; align-items:center }
+.note-actions button{ border:none; background:transparent; cursor:pointer; font-size:16px; padding:4px 6px; transition:transform 0.2s }
+.note-actions button:hover{ transform:scale(1.15) }
+.tags-wrap{ display:flex; flex-wrap:wrap; gap:4px }
+.tag{ display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; background:rgba(0,0,0,0.06); color:var(--text) }
+.category-badge{ font-size:11px; background:rgba(0,0,0,0.08); padding:2px 6px; border-radius:4px }
+.note-meta{ font-size:12px; color:var(--muted); margin-top:2px }
+.todos-wrap{ margin-top:6px; padding:6px; background:rgba(0,0,0,0.02); border-radius:6px; width:100% }
+.todos-wrap ul{ margin:2px 0; padding-left:18px }
+.todos-wrap li{ font-size:12px; margin:2px 0 }
+.search-highlight{ background:yellow }
+#editModal textarea{ background:var(--bg); color:var(--text); border-color:var(--border) }
+#editModal button{ font-family:inherit }
+
+

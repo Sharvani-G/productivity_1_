@@ -65,13 +65,40 @@
     <div class="auth-container" id="authActions" style="display:none;"></div>
   </div>
 
-  <!-- Top bar (right area) with login/signup/logout placed at top-right -->
-  <div class="login" style="margin-left:300px;">
+  <!-- Top bar (right area) with login/signup/logout and back button -->
+  <div class="login" style="margin-left:300px; display: flex; align-items: center; justify-content: space-between;">
+    <!-- Back to Home Button -->
+    <a href="/" id="backBtn" style="margin-left: 20px; padding: 8px 12px; background: transparent; color: white; text-decoration: none; border: 2px solid white; border-radius: 5px; cursor: pointer; font-size: 18px; opacity: 0; pointer-events: none; transition: opacity 0.2s;">
+      &lt;
+    </a>
+    <style nonce="<%= cspNonce %>">
+      #backBtn:hover { background-color: rgb(64, 61, 61); }
+      #backBtn.show { opacity: 1; pointer-events: auto; }
+    </style>
     <div style="flex:1"></div>
     <div id="topAuth" style="padding-right:18px;">
       <div id="authActionsTop" style="display:inline-block;"></div>
     </div>
   </div>
+
+  <script nonce="<%= cspNonce %>">
+    // Show back button on specific pages
+    function showBackButton() {
+      const backBtn = document.getElementById('backBtn');
+      const pathname = window.location.pathname;
+      const pagesNeedingBack = ['/weekly', '/notes', '/report', '/pomodoro'];
+      
+      if (pagesNeedingBack.includes(pathname)) {
+        backBtn.classList.add('show');
+      } else {
+        backBtn.classList.remove('show');
+      }
+    }
+    
+    // Call on page load
+    window.addEventListener('load', showBackButton);
+    showBackButton();
+  </script>
 
   <script nonce="<%= cspNonce %>">
     // Populate auth buttons in the top-right pill; keep storage-based behavior.

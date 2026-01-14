@@ -1,0 +1,10 @@
+/* Theme variants for notes_app only (applied to document via JS) */
+.theme-default{ --bg:#fbfcfe; --card:#fff; --text:#0f172a; --muted:#6b7280; --accent:#2563eb }
+.theme-dark{ --bg:#0b1220; --card:#0f172a; --text:#e6eef8; --muted:#9aa4b2; --accent:#7c3aed }
+.theme-black{ --bg:#000; --card:#0b0b0b; --text:#e6e6e6; --muted:#9aa4b2; --accent:#9ca3af }
+
+body.theme-default, body.theme-dark, body.theme-black{ background:var(--bg); color:var(--text) }
+.composer, .note-card{ background:var(--card) }
+.composer .composer-hint{ color:var(--muted) }
+.note-meta{ color:var(--muted) }
+.note-pin{ color:var(--accent) }
