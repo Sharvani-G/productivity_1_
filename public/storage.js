@@ -1,12 +1,15 @@
-// Frontend API wrapper for tasks - communicates with backend
-// Used by weekly planner (main.js, ui.js)
+// public/storage.js
 
-const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+// Helper to get the latest token from storage
+const getAuthHeader = () => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
 
 export async function loadTasksFromBackend(weekKey) {
   try {
     const response = await fetch(`/api/tasks/${weekKey}`, {
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      headers: getAuthHeader()
     });
     if (!response.ok) {
       if (response.status === 404) return { days: {} };
@@ -21,13 +24,16 @@ export async function loadTasksFromBackend(weekKey) {
 
 export async function saveTasksToBackend(weekKey, days) {
   try {
+    // If days isn't passed directly, try to get it from the global store
+    const dataToSend = days || (window.tasksByWeek && window.tasksByWeek[weekKey]) || {};
+    
     const response = await fetch(`/api/tasks/${weekKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...getAuthHeader()
       },
-      body: JSON.stringify({ days })
+      body: JSON.stringify({ days: dataToSend })
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('✅ Tasks saved to backend');
@@ -42,7 +48,7 @@ export async function clearWeekOnBackend(weekKey) {
   try {
     const response = await fetch(`/api/tasks/${weekKey}`, {
       method: 'DELETE',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      headers: getAuthHeader()
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('✅ Week cleared on backend');
@@ -57,7 +63,7 @@ export async function deleteTaskFromBackend(weekKey, dayIndex, taskId) {
   try {
     const response = await fetch(`/api/tasks/${weekKey}/${dayIndex}/${taskId}`, {
       method: 'DELETE',
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      headers: getAuthHeader()
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('✅ Task deleted from backend');
@@ -68,15 +74,15 @@ export async function deleteTaskFromBackend(weekKey, dayIndex, taskId) {
   }
 }
 
-export async function updateTaskOnBackend(weekKey, dayIndex, taskId, updatedFields) {
+export async function updateTaskOnBackend(weekKey, dayIndex, taskId, text, status) {
   try {
     const response = await fetch(`/api/tasks/${weekKey}/${dayIndex}/${taskId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...getAuthHeader()
       },
-      body: JSON.stringify(updatedFields)
+      body: JSON.stringify({ text, status })
     });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     console.log('✅ Task updated on backend');

@@ -433,8 +433,7 @@ async function sendDailyNotifications() {
 }
 
 if (emailEnabled) {
-  cron.schedule('0 12 * * *', sendDailyNotifications, { timezone: "Asia/Kolkata" });
-}
+cron.schedule('0 9 * * *', sendDailyNotifications, { timezone: "Asia/Kolkata" });}
 
 if (process.env.ENABLE_TEST_EMAIL_ROUTE === 'true') {
   app.get("/test-email", async (req, res) => {
