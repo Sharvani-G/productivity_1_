@@ -1,12 +1,182 @@
-:root{ --bg:#fbfcfe; --card:#fff; --text:#0f172a; --muted:#6b7280; --accent:#2563eb }
-body{ margin:0; font-family:Inter,system-ui,Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text) }
-.app{ max-width:980px; margin:28px auto; padding:18px }
-.app-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px }
-.header-actions{ display:flex; gap:8px }
-.btn{ background:var(--accent); color:#fff; border:none; padding:8px 10px; border-radius:8px; cursor:pointer }
-.btn.ghost{ background:transparent; color:var(--text); border:1px solid #ddd }
-.composer{ background:var(--card); padding:12px; border-radius:10px; box-shadow:0 6px 18px rgba(2,6,23,0.06); margin-bottom:12px }
-.composer-row{ display:flex; gap:8px; align-items:center; margin-top:8px }
-.composer textarea{ width:100%; min-height:80px; border-radius:8px; padding:8px; border:1px solid #e6eef8 }
-.notes-list{ display:flex; flex-direction:column; gap:10px }
-.controls{ display:flex; gap:8px; align-items:center; margin-bottom:10px }
+/* ============================
+   NOTES APP LAYOUT - RESPONSIVE
+   Mobile First Design
+   ============================ */
+
+:root { 
+    --bg: #fbfcfe; 
+    --card: #fff; 
+    --text: #0f172a; 
+    --muted: #6b7280; 
+    --accent: #2563eb;
+    --border: #e6eef8;
+}
+
+body { 
+    margin: 0; 
+    font-family: Inter, system-ui, Arial, Helvetica, sans-serif; 
+    background: var(--bg); 
+    color: var(--text);
+    font-size: clamp(0.875rem, 2vw, 1rem); /* 14px-16px fluid */
+}
+
+/* App container - responsive padding */
+.app { 
+    width: 100%;
+    max-width: 61.25rem; /* 980px max */
+    margin: clamp(0.875rem, 3vw, 1.75rem) auto; /* 14px-28px fluid */
+    padding: clamp(0.75rem, 3vw, 1.125rem); /* 12px-18px fluid */
+    box-sizing: border-box;
+}
+
+/* App header - responsive layout */
+.app-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: clamp(0.625rem, 2vw, 0.875rem);
+    flex-wrap: wrap; /* Wrap on very small screens */
+    gap: 0.5rem;
+}
+
+/* Header actions - responsive stacking */
+.header-actions { 
+    display: flex; 
+    gap: clamp(0.375rem, 1.5vw, 0.5rem);
+    flex-wrap: wrap;
+}
+
+/* Buttons - touch-friendly sizing */
+.btn { 
+    background: var(--accent); 
+    color: #fff; 
+    border: none; 
+    padding: clamp(0.5rem, 2vw, 0.625rem) clamp(0.625rem, 2vw, 0.875rem);
+    border-radius: clamp(0.375rem, 1.5vw, 0.5rem);
+    cursor: pointer;
+    min-height: 2.75rem; /* 44px touch target */
+    font-size: clamp(0.813rem, 2vw, 1rem); /* 13px-16px fluid */
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-0.0625rem);
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn.ghost { 
+    background: transparent; 
+    color: var(--text); 
+    border: 0.0625rem solid #ddd;
+}
+
+.btn.ghost:hover {
+    background: #f3f4f6;
+}
+
+/* Composer - responsive card */
+.composer { 
+    background: var(--card); 
+    padding: clamp(0.625rem, 2vw, 0.875rem);
+    border-radius: clamp(0.5rem, 1.5vw, 0.75rem);
+    box-shadow: 0 0.375rem 1.125rem rgba(2, 6, 23, 0.06);
+    margin-bottom: clamp(0.625rem, 2vw, 0.875rem);
+}
+
+/* Composer row - responsive layout */
+.composer-row { 
+    display: flex; 
+    gap: clamp(0.375rem, 1.5vw, 0.5rem);
+    align-items: center; 
+    margin-top: clamp(0.375rem, 1.5vw, 0.5rem);
+    flex-wrap: wrap; /* Wrap on narrow screens */
+}
+
+/* Textarea - responsive sizing */
+.composer textarea { 
+    width: 100%; 
+    min-height: clamp(4rem, 15vh, 5rem); /* 64px-80px responsive */
+    border-radius: clamp(0.375rem, 1.5vw, 0.5rem);
+    padding: clamp(0.5rem, 2vw, 0.625rem);
+    border: 0.0625rem solid var(--border);
+    font-size: clamp(0.875rem, 2vw, 1rem);
+    font-family: inherit;
+    resize: vertical; /* Allow vertical resize only */
+    box-sizing: border-box;
+}
+
+/* Notes list - responsive gaps */
+.notes-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: clamp(0.5rem, 1.5vw, 0.75rem);
+}
+
+/* Controls - responsive layout */
+.controls { 
+    display: flex; 
+    gap: clamp(0.375rem, 1.5vw, 0.5rem);
+    align-items: center; 
+    margin-bottom: clamp(0.5rem, 2vw, 0.75rem);
+    flex-wrap: wrap; /* Stack on narrow screens */
+}
+
+/* ============================
+   MEDIA QUERIES
+   ============================ */
+
+/* TABLETS AND UP (768px+) */
+@media (min-width: 48em) {
+    .app {
+        padding: 1.125rem;
+        margin: 1.75rem auto;
+    }
+    
+    .composer-row {
+        flex-wrap: nowrap; /* Don't wrap on larger screens */
+    }
+    
+    .controls {
+        flex-wrap: nowrap;
+    }
+}
+
+/* DESKTOPS AND UP (1024px+) */
+@media (min-width: 64em) {
+    .app {
+        padding: 1.5rem;
+    }
+    
+    .composer textarea {
+        min-height: 5rem; /* 80px */
+    }
+}
+
+/* TOUCH DEVICES */
+@media (hover: none) and (pointer: coarse) {
+    /* Ensure touch-friendly sizing */
+    .btn {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem; /* Prevent iOS zoom */
+    }
+    
+    .composer textarea {
+        font-size: 1rem; /* Prevent iOS zoom */
+    }
+    
+    /* Remove hover effects */
+    .btn:hover {
+        transform: none;
+        background: var(--accent);
+    }
+    
+    .btn.ghost:hover {
+        background: transparent;
+    }
+}

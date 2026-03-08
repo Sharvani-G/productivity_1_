@@ -107,7 +107,8 @@ export function createTaskCard(
   input.maxLength = 100;
 
   const buttonContainer = document.createElement("div");
-  buttonContainer.style.cssText = "display: flex; gap: 5px; margin-top: 4px;";
+  buttonContainer.classList.add("task-actions");
+  buttonContainer.style.cssText = "display: flex; gap: 5px; margin-top: 4px; width: 100%;";
 
   const saveBtn = document.createElement("button");
   saveBtn.textContent = text ? "Edit" : "Save";

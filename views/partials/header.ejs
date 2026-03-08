@@ -1,55 +1,352 @@
   <style nonce="<%= cspNonce %>">
+    /* ============================
+       HEADER RESPONSIVE STYLES
+       Mobile First Design
+       ============================ */
+    
     /* General reset */
     body { margin:0; padding:0; }
-    .maincontainer{ position: fixed; height: 100vh; background-color: #000000; width: 300px; display: grid; grid-template-rows: auto 1fr; }
-    .container{ display: grid; grid-template-rows: repeat(5, auto); gap: 5px; background-color: black; justify-items: center; align-content: center; }
-
-    .btn{ margin-left:20px; padding: 10px; background-color: #000000; color: white; border: none; cursor: pointer; width: 250px; height: 50px; border: solid white 2px; border-radius: 5px; transition: transform 0.2s; }
-    .sb:hover{ background-color: rgb(64, 61, 61); color:white; border: solid white 2px; width: 245px; height: 45px; }
-
-      .logo{ display:block; margin-top:15px; margin-left: 10px; font-weight:800; font-size:26px; color: #fff; padding: 14px 12px; width: 220px; }
-
-    .login{ display:flex; align-items:center; justify-content: flex-end; background-image: radial-gradient(circle at center,  #accccf, #000000); padding: 0 20px; height:56px; }
-
-    .sign{ text-align: center; padding: 10px; background-color: #000000; color: white; border: none; cursor: pointer; width: 100px; height: 45px; border: solid white 2px; border-radius: 50px; }
-    .sign:hover{ background-color: rgb(64, 61, 61); color:white; border: solid white 2px; width: 95px; height: 40px; }
-
-    .content-section { margin-left: 300px; padding: 100px;  color: white; height: auto; }
-
-    /* site-nav styles to match sidebar buttons */
-    .site-nav { padding-left:0; height:100%; display:flex; }
-    .nav-list { list-style:none; padding: 12px 0; margin: auto; display:flex; flex-direction:column; gap:12px; align-items:center; }
-    .nav-link {
-      display:inline-block;
-      width: 250px;
-      text-align:center;
-      padding: 12px 8px;
-      color: #fff;
-      text-decoration: none;
-      border: 2px solid #fff;
-      border-radius: 5px;
-      background: transparent;
-      box-sizing: border-box;
+    
+    /* Sidebar - mobile: hidden, desktop: visible */
+    .maincontainer{ 
+        position: fixed; 
+        height: 100vh; 
+        background-color: #000000; 
+        width: min(80vw, 18.75rem); /* 300px max, scales on mobile */
+        display: grid; 
+        grid-template-rows: auto 1fr;
+        z-index: 1000;
+        transition: left 0.3s ease-in-out;
+        /* Mobile: off-screen */
+        left: -100%;
+        top: 0;
     }
-    .nav-link:hover { background: rgb(64,61,61); }
-    .nav-link:visited { color: #fff; }
-    /* Active link style: only the currently visible section */
-    .nav-link.active { background: #fff; color: #000; }
+    
+    /* When mobile menu is active */
+    .maincontainer.mobile-menu-active {
+        left: 0;
+    }
+    
+    /* Mobile overlay */
+    .mobile-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        cursor: pointer;
+    }
+    
+    .mobile-overlay.active {
+        display: block;
+    }
+    
+    /* Hamburger menu - mobile only */
+    .hamburger-menu {
+        display: block;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1001;
+        background: #000;
+        border: 0.125rem solid white;
+        border-radius: 0.3125rem;
+        width: 2.75rem;
+        height: 2.75rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        transition: transform 0.2s;
+    }
+    
+    .hamburger-menu:hover {
+        transform: scale(1.05);
+    }
+    
+    .hamburger-menu span {
+        display: block;
+        width: 100%;
+        height: 0.125rem;
+        background: white;
+        margin: 0.313rem 0;
+        transition: 0.3s;
+    }
+    
+    /* Hamburger animation when active */
+    .hamburger-menu.active span:nth-child(1) {
+        transform: rotate(-45deg) translate(-0.313rem, 0.375rem);
+    }
+    
+    .hamburger-menu.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .hamburger-menu.active span:nth-child(3) {
+        transform: rotate(45deg) translate(-0.313rem, -0.375rem);
+    }
+    
+    .container{ 
+        display: grid; 
+        grid-template-rows: repeat(5, auto); 
+        gap: 0.313rem;
+        background-color: black; 
+        justify-items: center; 
+        align-content: center; 
+    }
 
-    /* smooth scroll for the whole document */
-    html { scroll-behavior: smooth; }
+    .btn{ 
+        margin-left: 5%; 
+        padding: clamp(0.625rem, 2vw, 0.75rem);
+        background-color: #000000; 
+        color: white; 
+        border: none; 
+        cursor: pointer; 
+        width: min(90%, 15.625rem);
+        min-height: 2.75rem;
+        height: auto;
+        border: 0.125rem solid white;
+        border-radius: 0.3125rem;
+        transition: transform 0.2s; 
+        font-size: clamp(0.875rem, 2vw, 1rem);
+    }
+    
+    .sb:hover{ 
+        background-color: rgb(64, 61, 61); 
+        transform: scale(0.98);
+    }
 
-    /* auth button pill */
-    .auth-btn, .auth-btn:visited { border-radius:22px; padding:8px 14px; display:inline-flex; background:#0b0b0b; color:#a3dad8;; text-decoration:none; border:2px solid #fff; box-sizing: border-box; min-height:36px; line-height:18px; align-items:center; justify-content:center; white-space:nowrap; }
-    .auth-btn:hover { opacity:0.95; }
+    .logo{ 
+        display: block; 
+        margin-top: clamp(0.625rem, 2vw, 0.938rem);
+        margin-left: 5%;
+        font-weight: 800; 
+        font-size: clamp(1.25rem, 4vw, 1.625rem);
+        color: #fff; 
+        padding: clamp(0.625rem, 2vw, 0.875rem);
+        width: 90%;
+        max-width: 13.75rem;
+    }
 
-    /* ensure sidebar hides on small screens */
-    @media (max-width:800px) { .maincontainer { display:none; } .content-section { margin-left: 0; } }
+    /* Top bar - responsive */
+    .login{ 
+        display: flex; 
+        align-items: center; 
+        justify-content: flex-end; 
+        background-image: radial-gradient(circle at center, #accccf, #000000); 
+        padding: 0 clamp(0.625rem, 3vw, 1.25rem);
+        height: clamp(3.5rem, 10vh, 3.75rem);
+        /* Mobile: full width, no margin */
+        margin-left: 0;
+    }
+
+    .sign{ 
+        text-align: center; 
+        padding: clamp(0.5rem, 2vw, 0.625rem);
+        background-color: #000000; 
+        color: white; 
+        border: none; 
+        cursor: pointer; 
+        min-width: 5.5rem;
+        width: clamp(5.5rem, 15vw, 6.25rem);
+        min-height: 2.75rem;
+        height: auto;
+        border: 0.125rem solid white;
+        border-radius: 3.125rem;
+        font-size: clamp(0.75rem, 2vw, 1rem);
+        transition: transform 0.2s;
+    }
+    
+    .sign:hover{ 
+        background-color: rgb(64, 61, 61); 
+        transform: scale(0.95);
+    }
+
+    /* Content section - mobile first */
+    .content-section { 
+        margin-left: 0; /* Mobile: no sidebar */
+        padding: clamp(1.25rem, 5vw, 6.25rem);
+        padding-top: 4.5rem; /* Space for hamburger */
+        color: white; 
+        height: auto; 
+    }
+
+    /* site-nav styles */
+    .site-nav { 
+        padding-left: 0; 
+        height: 100%; 
+        display: flex; 
+    }
+    
+    .nav-list { 
+        list-style: none; 
+        padding: clamp(0.625rem, 2vw, 0.75rem) 0;
+        margin: auto; 
+        display: flex; 
+        flex-direction: column; 
+        gap: clamp(0.625rem, 2vw, 0.75rem);
+        align-items: stretch; 
+        width: 100%;
+    }
+    
+    .nav-link {
+        display: flex;
+        width: 100%;
+        max-width: none;
+        text-align: center;
+        padding: clamp(0.625rem, 2vw, 0.75rem);
+        color: #fff;
+        text-decoration: none;
+        border: 0.125rem solid #fff;
+        border-radius: 0.3125rem;
+        background: transparent;
+        box-sizing: border-box;
+        font-size: clamp(0.875rem, 2vw, 1rem);
+        min-height: 2.75rem;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-item {
+        width: 100%;
+        padding: 0 clamp(0.625rem, 2vw, 1rem);
+        box-sizing: border-box;
+    }
+    
+    .nav-link:hover { 
+        background: rgb(64,61,61); 
+    }
+    
+    .nav-link:visited { 
+        color: #fff; 
+    }
+    
+    .nav-link.active { 
+        background: #fff; 
+        color: #000; 
+    }
+
+    /* smooth scroll */
+    html { 
+        scroll-behavior: smooth; 
+    }
+
+    /* auth button */
+    .auth-btn, .auth-btn:visited { 
+        border-radius: 1.375rem;
+        padding: clamp(0.5rem, 2vw, 0.625rem) clamp(0.75rem, 2vw, 1rem);
+        display: inline-flex; 
+        background: #0b0b0b; 
+        color: #a3dad8;
+        text-decoration: none; 
+        border: 0.125rem solid #fff;
+        box-sizing: border-box; 
+        min-height: 2.75rem;
+        line-height: 1.125rem;
+        align-items: center; 
+        justify-content: center; 
+        white-space: nowrap;
+        font-size: clamp(0.75rem, 2vw, 0.875rem);
+    }
+    
+    .auth-btn:hover { 
+        opacity: 0.95; 
+    }
+
+    /* Back button - responsive */
+    #backBtn {
+        margin-left: clamp(0.625rem, 3vw, 1.25rem);
+        padding: clamp(0.5rem, 2vw, 0.625rem) clamp(0.625rem, 2vw, 0.875rem);
+        background: transparent;
+        color: white;
+        text-decoration: none;
+        border: 0.125rem solid white;
+        border-radius: 0.3125rem;
+        cursor: pointer;
+        font-size: clamp(1rem, 3vw, 1.125rem);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    #backBtn:hover { 
+        background-color: rgb(64, 61, 61); 
+    }
+    
+    #backBtn.show { 
+        opacity: 1; 
+        pointer-events: auto; 
+    }
+
+    /* ============================
+       MEDIA QUERIES
+       ============================ */
+
+    /* TABLETS AND UP (768px+) */
+    @media (min-width: 48em) {
+        /* Hide hamburger on tablets+ */
+        .hamburger-menu {
+            display: none;
+        }
+        
+        /* Show sidebar permanently */
+        .maincontainer {
+            left: 0;
+            width: 18.75rem;
+        }
+        
+        /* Mobile overlay not needed */
+        .mobile-overlay {
+            display: none !important;
+        }
+        
+        /* Adjust content for visible sidebar */
+        .content-section {
+            margin-left: 18.75rem;
+            padding-top: clamp(2rem, 5vw, 6.25rem);
+        }
+        
+        /* Top bar also shifts */
+        .login {
+            margin-left: 18.75rem;
+        }
+    }
+    
+    /* TOUCH DEVICES */
+    @media (hover: none) and (pointer: coarse) {
+        /* Remove hover effects on touch */
+        .btn:hover, .sb:hover, .sign:hover, .nav-link:hover {
+            transform: none;
+            background-color: transparent;
+        }
+        
+        /* Add active states instead */
+        .btn:active, .sign:active, .nav-link:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+    }
   </style>
 
-  <!-- Left sidebar markup matching your provided structure -->
-  <div class="maincontainer">
-    <div class="logo" >FocusPanel</div>
+  <!-- Mobile overlay -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- Hamburger menu button -->
+  <button class="hamburger-menu" id="hamburgerMenu" aria-label="Toggle navigation menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Left sidebar markup -->
+  <div class="maincontainer" id="mainContainer">
+    <div class="logo">FocusPanel</div>
 
     <nav class="site-nav" aria-label="Primary navigation">
         <ul class="nav-list">
@@ -61,27 +358,69 @@
         </ul>
     </nav>
 
-    <!-- Auth Buttons Container (kept for potential left-side use) -->
+    <!-- Auth Buttons Container -->
     <div class="auth-container" id="authActions" style="display:none;"></div>
   </div>
 
-  <!-- Top bar (right area) with login/signup/logout and back button -->
-  <div class="login" style="margin-left:300px; display: flex; align-items: center; justify-content: space-between;">
+  <!-- Top bar (right area) -->
+  <div class="login" style="display: flex; align-items: center; justify-content: space-between;">
     <!-- Back to Home Button -->
-    <a href="/" id="backBtn" style="margin-left: 20px; padding: 8px 12px; background: transparent; color: white; text-decoration: none; border: 2px solid white; border-radius: 5px; cursor: pointer; font-size: 18px; opacity: 0; pointer-events: none; transition: opacity 0.2s;">
+    <a href="/" id="backBtn">
       &lt;
     </a>
-    <style nonce="<%= cspNonce %>">
-      #backBtn:hover { background-color: rgb(64, 61, 61); }
-      #backBtn.show { opacity: 1; pointer-events: auto; }
-    </style>
     <div style="flex:1"></div>
-    <div id="topAuth" style="padding-right:18px;">
+    <div id="topAuth" style="padding-right: clamp(0.625rem, 3vw, 1.125rem);">
       <div id="authActionsTop" style="display:inline-block;"></div>
     </div>
   </div>
 
   <script nonce="<%= cspNonce %>">
+    // Hamburger menu functionality
+    (function() {
+        const hamburger = document.getElementById('hamburgerMenu');
+        const sidebar = document.getElementById('mainContainer');
+        const overlay = document.getElementById('mobileOverlay');
+        
+        function toggleMenu() {
+            hamburger.classList.toggle('active');
+            sidebar.classList.toggle('mobile-menu-active');
+            overlay.classList.toggle('active');
+            
+            // Prevent body scroll when menu is open
+            if (sidebar.classList.contains('mobile-menu-active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+        
+        function closeMenu() {
+            hamburger.classList.remove('active');
+            sidebar.classList.remove('mobile-menu-active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Toggle menu on hamburger click
+        hamburger.addEventListener('click', toggleMenu);
+        
+        // Close menu on overlay click
+        overlay.addEventListener('click', closeMenu);
+        
+        // Close menu when clicking nav links
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', closeMenu);
+        });
+        
+        // Close menu on window resize to desktop size
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeMenu();
+            }
+        });
+    })();
+    
     // Show back button on specific pages
     function showBackButton() {
       const backBtn = document.getElementById('backBtn');

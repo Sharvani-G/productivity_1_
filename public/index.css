@@ -1,172 +1,263 @@
+/* ============================
+   RESPONSIVE DESIGN - MOBILE FIRST
+   Breakpoints: 480px, 768px, 1024px, 1440px
+   ============================ */
+
 /* General reset */
-body{
-    margin: 0;
-    padding: 0;
+html {
+    font-size: 16px; /* Base font size for rem calculations */
     box-sizing: border-box;
 }
 
-/* Sidebar container */
+*, *::before, *::after {
+    box-sizing: inherit;
+}
+
+body{
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scroll on mobile */
+}
+
+/* MOBILE FIRST: Sidebar hidden by default, shown as hamburger menu */
 .maincontainer{
     position: fixed;
+    top: 0;
+    left: -100%; /* Hidden off-screen on mobile */
     height: 100vh;
     background-color: #000000;
-    width: 300px;
+    width: min(80vw, 18.75rem); /* Max 300px, scales down on small screens */
     display: grid;
-    grid-template-rows: auto 1fr; /* logo takes natural height, container fills rest */
+    grid-template-rows: auto 1fr;
+    z-index: 1000;
+    transition: left 0.3s ease-in-out; /* Smooth slide animation */
+}
+
+/* When mobile menu is active */
+.maincontainer.mobile-menu-active {
+    left: 0;
+}
+
+/* Overlay for mobile menu */
+.mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 999;
+}
+
+.mobile-overlay.active {
+    display: block;
+}
+
+/* Hamburger menu button - mobile only */
+.hamburger-menu {
+    display: block;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1001;
+    background: #000;
+    border: 0.125rem solid white;
+    border-radius: 0.3125rem;
+    width: 2.75rem; /* 44px - minimum touch target */
+    height: 2.75rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: transform 0.2s;
+}
+
+.hamburger-menu:hover {
+    transform: scale(1.05);
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 100%;
+    height: 0.125rem;
+    background: white;
+    margin: 0.25rem 0;
+    transition: 0.3s;
 }
 
 .container{
     display: grid;
     grid-template-rows: repeat(5, auto);
-    gap: 5px;
+    gap: 0.3125rem; /* 5px converted */
     background-color: black;
     justify-items: center;  
     align-content: center;
 }
 
-/* Buttons */
+/* Buttons - responsive sizing with min touch target */
 .btn{
-    margin-left:20px;
-    padding: 10px;
+    margin-left: 5%;
+    padding: 0.625rem; /* 10px */
     background-color: #000000;
     color: white;
     border: none;
     cursor: pointer;
-    width: 250px;
-    height: 50px;
-    border: solid white 2px;
-    border-radius: 5px;
+    width: min(90%, 15.625rem); /* Max 250px, scales down */
+    min-height: 2.75rem; /* 44px - touch-friendly */
+    height: auto;
+    border: 0.125rem solid white;
+    border-radius: 0.3125rem;
     transition: transform 0.2s;
+    font-size: clamp(0.875rem, 2vw, 1rem); /* Fluid font size */
 }
 
 .sb:hover{
     background-color: rgb(64, 61, 61);
     color:white;
-    border: solid white 2px;
-    width: 245px;
-    height: 45px;
+    border: 0.125rem solid white;
+    transform: scale(0.98);
 }
-
-/*.btn:active{
-    background-color: rgb(244, 244, 247);
-    color:black;
-    border: solid black 2px;
-}*/
 
 .logo{
-    margin-left: 40px;
-    width: 200px;
+    margin-left: 5%;
+    width: 80%;
+    max-width: 12.5rem; /* 200px */
+    font-size: clamp(1.25rem, 4vw, 1.625rem); /* Fluid logo text size */
+    padding: 0.875rem 0.75rem;
 }
 
+/* Top bar - responsive */
 .login{
     display:flex;
     align-items:center;
     justify-content: flex-end;
     background-image: radial-gradient(circle at center, #accccf, #292727);
-    padding: 0 20px;
-    height:60px;
+    padding: 0 clamp(0.625rem, 3vw, 1.25rem); /* 10px-20px fluid */
+    height: clamp(3.5rem, 10vh, 3.75rem); /* 56px-60px fluid */
+    margin-left: 0; /* Mobile first - no margin */
 }
 
 .sign{
     text-align: center;
-    padding: 10px;
+    padding: 0.625rem;
     background-color: #000000;
     color: white;
     border: none;
     cursor: pointer;
-    width: 100px;
-    height: 45px;
-    border: solid white 2px;
-    border-radius: 50px;
+    min-width: 5.5rem; /* Minimum for readability */
+    width: clamp(5.5rem, 15vw, 6.25rem); /* 88px-100px fluid */
+    min-height: 2.75rem; /* 44px touch target */
+    height: auto;
+    border: 0.125rem solid white;
+    border-radius: 3.125rem; /* 50px */
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    transition: transform 0.2s;
 }
 
 .sign:hover{
     background-color: rgb(64, 61, 61);
     color:white;
-    border: solid white 2px;
-    width: 95px;
-    height: 40px;
+    border: 0.125rem solid white;
+    transform: scale(0.95);
 }
 
-/* Main content area */
+/* Main content area - mobile first (no sidebar margin) */
 .content-section {
-    margin-left: 300px; /* leave space for fixed sidebar */
-    padding: 100px;
-    
+    margin-left: 0; /* Mobile: no sidebar */
+    padding: clamp(1.25rem, 5vw, 6.25rem); /* 20px-100px fluid */
+    padding-top: 4.5rem; /* Space for hamburger menu */
     color: white;
     height: auto;
+    min-height: 100vh;
 }
 
+/* Mid buttons grid - responsive, mobile-first */
 .mid{
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
-    gap: 20px; /* space between columns and rows */
-    padding: 20px;
-    grid-auto-flow: row;
-    height: 250px;
-    width: 600px;
-  background-color: rgb(244, 244, 244); 
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    margin: 0 auto; 
+    /* Mobile: single column */
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    gap: clamp(0.625rem, 2vw, 1.25rem); /* 10px-20px fluid */
+    padding: clamp(0.875rem, 3vw, 1.25rem); /* 14px-20px fluid */
+    width: 100%;
+    max-width: 37.5rem; /* 600px max */
+    min-height: 15.625rem; /* 250px minimum */
+    height: auto;
+    background-color: rgb(244, 244, 244); 
+    border: 0.0625rem solid #ccc;
+    border-radius: 0.625rem;
+    margin: 0 auto;
 }
 
+/* Grid positioning - default for mobile */
 .one{
-    grid-column: span 2/3;
+    grid-column: span 1;
+    grid-row: span 1;
     text-align: center;
 }
 
 .two{
-    grid-row: span 4;
+    grid-row: span 1;
     grid-column: span 1;
     text-align: center;
 }
 
 .three{
-    grid-row: span 3;
+    grid-row: span 1;
+    text-align: center;
 }
 
 .four{
-    grid-row: span 2;
+    grid-row: span 1;
+    text-align: center;
 }
 
 .mid>form>button{
-    padding: 20px;
+    padding: clamp(0.875rem, 3vw, 1.25rem); /* 14px-20px fluid */
     text-align: center;
-    border: 1px solid #333;
-    border-radius: 8px;
-    align-content: center;
+    border: 0.0625rem solid #333;
+    border-radius: 0.5rem;
     color: #000000;
-    width:100%;
-    height:100%;
+    width: 100%;
+    height: 100%;
+    min-height: 2.75rem; /* 44px touch target */
     background-color: #f4f4f4;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, background-color 0.2s;
+    font-size: clamp(0.875rem, 2.5vw, 1rem); /* Fluid font */
 }
 
+.mid>form>button:hover {
+    transform: scale(1.02);
+    background-color: #e0e0e0;
+}
+
+/* Page sections - responsive padding and margins */
 .page-section{
-    margin: 30px; /* leave space for fixed sidebar */
-    padding: 80px;
-    background-color: rgba(17, 17, 17, 0.3); /* was 0.85, now 0.3 */
+    margin: clamp(0.625rem, 3vw, 1.875rem); /* 10px-30px fluid */
+    padding: clamp(1.25rem, 5vw, 5rem); /* 20px-80px fluid */
+    background-color: rgba(17, 17, 17, 0.3);
     color: white;
     height: auto;
-    border: #f4f4f4 solid 2px;
-    border-radius: 5px;
-   
+    border: 0.125rem solid #f4f4f4;
+    border-radius: 0.3125rem;
 }
 
 .welcome{
     text-align: left;
-    margin-top: 50px;
+    margin-top: clamp(1.25rem, 5vw, 3.125rem); /* 20px-50px fluid */
+    font-size: clamp(1.5rem, 5vw, 2.5rem); /* Fluid heading size */
 }
 
+/* Calendar positioning - mobile responsive */
 #calendar{
-    margin-left: 100px;
-    margin-top: 100px;
+    margin-left: 0; /* Mobile: remove fixed margins */
+    margin-top: clamp(1.25rem, 5vw, 6.25rem); /* 20px-100px fluid */
+    width: 100%;
 }
 
 .part1{
-    margin-left: 100px;
+    margin-left: 0; /* Mobile: remove fixed margins */
+    padding: 0 clamp(0.625rem, 2vw, 1.25rem); /* Responsive padding */
 }
 
 .p1{
@@ -178,96 +269,137 @@ body{
     display: none;
 }
 
+/* Buttons - responsive with touch targets */
 button {
-    padding: 10px 20px;
+    padding: clamp(0.625rem, 2vw, 1.25rem); /* 10px-20px fluid */
     cursor: pointer;
-    border: 1px solid #ccc;
-    margin-right: 5px;
-    border-radius: 4px;
+    border: 0.0625rem solid #ccc;
+    margin-right: 0.3125rem;
+    border-radius: 0.25rem;
+    min-height: 2.75rem; /* 44px touch-friendly */
+    font-size: clamp(0.875rem, 2vw, 1rem);
+    transition: background-color 0.2s, transform 0.2s;
 }
 
+button:active {
+    transform: scale(0.98);
+}
+
+/* Week calendar - responsive grid */
 .week-calendar {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    grid-template-rows: 50px;   /* first row fixed */
-    grid-auto-rows: minmax(150px, auto);  /* all other rows grow */
-    gap: 10px;
-    margin-right: 50px;
+    /* Mobile: single column, tablet+: 7 columns */
+    grid-template-columns: 1fr;
+    grid-template-rows: auto; /* Flexible row heights */
+    grid-auto-rows: minmax(9.375rem, auto); /* 150px minimum */
+    gap: clamp(0.313rem, 1vw, 0.625rem); /* 5px-10px fluid */
+    margin-right: 0; /* Mobile: remove fixed margins */
+    width: 100%;
 }
 
 .week-calendar .content {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* tasks stack from top */
+    justify-content: flex-start;
     align-items: stretch;
     position: relative;
-    border: 1px solid #2b2b2b;
-    border-radius: 8px;
-    padding: 1px;
-    overflow-y: auto; /* allows scroll if too many tasks */
-    min-height: 180px;
+    border: 0.0625rem solid #2b2b2b;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    overflow-y: auto;
+    min-height: clamp(9.375rem, 25vh, 11.25rem); /* 150px-180px responsive */
 }
 
 .week-calendar .content .date {
     text-align: center;
-    font-size: 1.5em;
+    font-size: clamp(1rem, 3vw, 1.5rem); /* Fluid date font 16px-24px */
     color: rgb(13, 0, 0);
+    padding: 0.5rem 0;
 }
 
 .week-calendar .content .add-task {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 0.625rem;
+    right: 0.625rem;
     background-color: #2b2b2b;
     color: white;
-    border: 1px solid #3c3c3c;
-    border-radius: 5px;
-    padding: 6px 10px;
+    border: 0.0625rem solid #3c3c3c;
+    border-radius: 0.3125rem;
+    padding: 0.5rem 0.75rem;
     cursor: pointer;
     z-index: 10;
+    min-height: 2.75rem; /* 44px touch target */
+    min-width: 2.75rem;
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    transition: transform 0.2s;
 }
 
-/* Task card styling */
+.week-calendar .content .add-task:hover {
+    transform: scale(1.05);
+}
+
+/* Task card styling - responsive */
 .task-card {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     background-color: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(4px);
-    padding: 4px 4px;
-    border-radius: 8px;
-    margin-bottom: 8px;
+    padding: clamp(0.313rem, 1vw, 0.625rem); /* 5px-10px fluid */
+    border-radius: 0.5rem;
+    margin-bottom: clamp(0.313rem, 1vw, 0.5rem); /* 5px-8px fluid */
     width: 100%;
     box-sizing: border-box;
+    transition: transform 0.2s;
 }
 
 .task-card input[type="text"] {
-    padding: 0 6px;        /* remove vertical padding */
-    margin: 0;
-    height: 24px;          /* fix height to make it compact */
-    line-height: 24px; 
-    border-radius: 5px;
-    border: 1px solid #ccc;
+    padding: 0 clamp(0.375rem, 1vw, 0.625rem); /* 6px-10px fluid */
+    margin: 0.25rem 0;
+    min-height: 2rem; /* Better touch target than 24px fixed */
+    height: auto;
+    line-height: 1.5;
+    border-radius: 0.3125rem;
+    border: 0.0625rem solid #ccc;
     outline: none;
     background-color: rgba(255,255,255,0.2);
     color: rgb(0, 0, 0);
-    width: calc(100% - 10px); /* slightly smaller so it fits inside */
+    width: 100%;
+    font-size: clamp(0.875rem, 2vw, 1rem);
 }
 
 .task-card button {
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: clamp(0.375rem, 1.5vw, 0.625rem) clamp(0.625rem, 2vw, 1rem);
+    border-radius: 0.3125rem;
     border: none;
     cursor: pointer;
     background-color: #444;
     color: white;
     transition: 0.2s;
-    font-size: 0.9em;
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
     font-weight: bold;
+    min-height: 2.75rem; /* 44px touch target */
+    min-width: 2.75rem;
 }
 
 .task-card button:hover {
     background-color: #666;
+    transform: scale(1.02);
+}
+
+/* Keep action row inside each task card without overflow */
+.task-card .task-actions {
+    display: flex;
+    width: 100%;
+    gap: 0.3125rem;
+    margin-top: 0.25rem;
+}
+
+.task-card .task-actions button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.5rem 0.375rem;
+    font-size: clamp(0.8rem, 1.1vw, 0.95rem);
 }
 
 .task-card button:disabled {
@@ -286,15 +418,20 @@ button {
 .task-card .status label {
     display: flex;
     align-items: center;
-    font-size: 0.9em;
+    font-size: clamp(0.75rem, 2vw, 0.9rem);
+    padding: 0.25rem;
+    cursor: pointer;
 }
 
-/* Make radio buttons inline and contained */
+/* Make radio buttons inline and contained with better spacing for touch */
 .task-card .status {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
     align-items: center;
+    gap: clamp(0.313rem, 1vw, 0.625rem); /* Space between options */
+    width: 100%;
+    overflow-wrap: anywhere;
 }
 
 /* Coloring the card based on selected status */
@@ -315,21 +452,21 @@ button {
 }
 
 .week-calendar .content .task-card {
-    width: 90%; /* slightly smaller than full cell width */
-    margin: 2px auto; /* centered inside the cell */
+    width: 100%; /* Mobile: full width */
+    margin: 0.25rem auto;
 }
 
 .task-card:hover {
     transform: scale(1.02);
     transition: transform 0.2s ease;
 }
+
+/* Canvas background - always fills viewport */
 html, body {
   margin: 0;
   padding: 0;
-    background: transparent;
-
+  background: transparent;
 }
-
 
 /* Foreground content */
 .content {
@@ -338,9 +475,9 @@ html, body {
 }
 
 section {
- 
   color: rgb(0, 0, 0);
 }
+
 #bg-canvas {
   position: fixed;
   inset: 0;
@@ -350,107 +487,382 @@ section {
   pointer-events: none;
 }
 
-/* --- Carousel Style Isolation --- */
-/* --- Optimized Features Section --- */
-
+/* Features Section - Responsive Carousel */
 #features.page-section {
-    
     height: auto;
-    padding-top: 20px; /* Reduced top padding to move heading up */
-    padding-bottom: 40px;
-    margin-top: 10px;   /* Minimal top margin */
+    padding-top: clamp(1.25rem, 3vw, 2rem); /* 20px-32px fluid */
+    padding-bottom: clamp(2rem, 5vw, 2.5rem); /* 32px-40px fluid */
+    margin-top: clamp(0.625rem, 2vw, 1rem); /* 10px-16px fluid */
     box-sizing: border-box;
     overflow: hidden;
 }
 
 .welcome-heading {
     text-align: center;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    font-size: 1.8rem;
+    margin-bottom: clamp(1.25rem, 3vw, 2rem);
+    margin-top: clamp(1.25rem, 3vw, 2rem);
+    font-size: clamp(1.5rem, 4vw, 2.25rem); /* 24px-36px fluid heading */
     color: #fff;
 }
 
 .img-crop {
     width: 100%;
-    height: 320px; /* Adjusted height for better fit */
+    height: clamp(12.5rem, 40vh, 20rem); /* 200px-320px responsive */
     overflow: hidden;
     background-color: #000;
-    border-radius: 8px 8px 0 0; /* Rounded top only */
+    border-radius: 0.5rem 0.5rem 0 0;
 }
 
 .img-crop img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: contain; /* Prevent image distortion */
 }
 
 /* Custom Caption Styling (Below Image) */
 .custom-caption-below {
-    background: rgba(25, 25, 25, 0.9); /* Dark solid background */
-    padding: 15px;
+    background: rgba(25, 25, 25, 0.9);
+    padding: clamp(0.875rem, 3vw, 1.25rem); /* 14px-20px fluid */
     text-align: center;
-    border-radius: 0 0 8px 8px; /* Rounded bottom */
-    border-top: 1px solid #444;
+    border-radius: 0 0 0.5rem 0.5rem;
+    border-top: 0.0625rem solid #444;
 }
 
 .custom-caption-below h5 {
     color: #fff;
-    font-size: 1.2rem;
-    margin-bottom: 5px;
+    font-size: clamp(1rem, 3vw, 1.25rem); /* 16px-20px fluid */
+    margin-bottom: 0.3125rem;
+    font-weight: 600;
 }
 
 .custom-caption-below p {
     color: #bbb;
-    font-size: 0.9rem;
+    font-size: clamp(0.813rem, 2.5vw, 1rem); /* 13px-16px fluid */
     margin: 0;
+    line-height: 1.5;
 }
 
 /* Adjust Indicators for visibility below text */
 .carousel-indicators {
-    bottom: -35px; /* Moves dots below the text box */
+    bottom: clamp(-2.5rem, -5vw, -2.188rem); /* Responsive indicator position */
 }
 
 #features .carousel {
-    margin-bottom: 40px; /* Space for indicators */
+    margin-bottom: clamp(2rem, 5vw, 2.5rem); /* Space for indicators */
 }
 
-/* Arrow Visibility */
+/* Arrow Visibility - better touch targets on mobile */
 #features .carousel button {
     background: transparent !important;
     border: none !important;
-    width: 8% !important;
+    width: clamp(2.75rem, 12%, 8%) !important; /* Larger on mobile for touch */
+    min-width: 2.75rem !important; /* 44px minimum touch target */
 }
 
-/* --- Guide Section Styling --- */
-
+/* Guide Section - Responsive Video Container */
 #guide.page-section {
-    margin-top: 20px;
-    padding-top: 30px;      /* Reduced top padding */
-    padding-bottom: 40px;
+    margin-top: clamp(1.25rem, 3vw, 2rem);
+    padding-top: clamp(1.875rem, 4vw, 3rem);
+    padding-bottom: clamp(2rem, 5vw, 2.5rem);
     box-sizing: border-box;
 }
 
 .guide-intro {
-    font-size: 1.1rem;
+    font-size: clamp(0.938rem, 2.5vw, 1.125rem); /* 15px-18px fluid */
     color: #ccc;
-    margin-bottom: 20px;
+    margin-bottom: clamp(1.25rem, 3vw, 1.875rem);
     text-align: center;
+    line-height: 1.6;
 }
 
 .video-container {
     width: 100%;
+    max-width: 100%; /* Mobile: full width */
     display: flex;
     justify-content: center;
-    background: #000;      /* Black background for the video box */
-    border-radius: 8px;
+    background: #000;
+    border-radius: 0.5rem;
     overflow: hidden;
-    border: 1px solid #444;
+    border: 0.0625rem solid #444;
 }
 
 #guide video {
-    width: 100%;           /* Fills the 50vw width of the section */
-    height: auto;          /* Maintains the video's original aspect ratio */
-    max-height: 450px;     /* Prevents the video from becoming too tall */
+    width: 100%;
+    height: auto;
+    max-height: clamp(15.625rem, 50vh, 28.125rem); /* 250px-450px responsive */
     display: block;
+}
+
+/* ============================
+   MEDIA QUERIES - BREAKPOINTS
+   Mobile First: 320px base
+   Small Phone: 480px
+   Tablet: 768px
+   Small Laptop: 1024px
+   Desktop: 1440px+
+   ============================ */
+
+/* ===== SMALL PHONES AND UP (480px+) ===== */
+@media (min-width: 30em) { /* 480px */
+    .mid {
+        /* Two columns on larger phones */
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+    }
+
+    .one {
+        grid-column: span 1;
+    }
+
+    .two {
+        grid-column: span 1;
+    }
+    
+    .welcome-heading {
+        font-size: clamp(1.75rem, 4vw, 2.25rem);
+    }
+}
+
+/* ===== TABLETS AND UP (768px+) ===== */
+@media (min-width: 48em) { /* 768px */
+    
+    /* Hide hamburger menu on tablets+ */
+    .hamburger-menu {
+        display: none;
+    }
+    
+    /* Show sidebar on tablets+ */
+    .maincontainer {
+        left: 0; /* Always visible */
+        width: 18.75rem; /* Fixed 300px on larger screens */
+    }
+    
+    /* Adjust content for visible sidebar */
+    .content-section {
+        margin-left: 18.75rem; /* 300px */
+        padding-top: clamp(2rem, 5vw, 6.25rem);
+    }
+    
+    /* Top bar also shifts */
+    .login {
+        margin-left: 18.75rem; /* 300px */
+    }
+    
+    /* Mid buttons: now 3 columns with original layout */
+    .mid {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+    }
+    
+    .one {
+        grid-column: span 2;
+        grid-row: 1;
+    }
+    
+    .two {
+        grid-row: span 2;
+        grid-column: 3;
+    }
+    
+    .three {
+        grid-row: 2;
+        grid-column: 1;
+    }
+    
+    .four {
+        grid-row: 2;
+        grid-column: 2;
+    }
+    
+    /* Week calendar: 7 columns for full week view */
+    .week-calendar {
+        grid-template-columns: repeat(7, 1fr);
+        grid-template-rows: 3.125rem; /* 50px header */
+    }
+    
+    .week-calendar .content .task-card {
+        width: 90%; /* Slightly narrower on desktop */
+    }
+    
+    /* Video container: max 50vw on larger screens */
+    .video-container {
+        max-width: 50vw;
+    }
+    
+    /* Restore calendar margins for larger layouts */
+    #calendar {
+        margin-left: clamp(1.25rem, 5vw, 6.25rem);
+    }
+    
+    .part1 {
+        margin-left: clamp(1.25rem, 5vw, 6.25rem);
+    }
+}
+
+/* ===== SMALL LAPTOPS AND UP (1024px+) ===== */
+@media (min-width: 64em) { /* 1024px */
+    
+    /* Increase content padding for larger screens */
+    .content-section {
+        padding: clamp(3rem, 6vw, 6.25rem);
+    }
+    
+    .page-section {
+        padding: clamp(2.5rem, 5vw, 5rem);
+        margin: clamp(1.25rem, 3vw, 1.875rem);
+    }
+    
+    /* Better spacing for task cards */
+    .task-card {
+        padding: clamp(0.5rem, 1vw, 0.75rem);
+    }
+    
+    /* Video at optimal size */
+    .video-container {
+        max-width: 45vw;
+    }
+}
+
+/* ===== DESKTOPS AND UP (1440px+) ===== */
+@media (min-width: 90em) { /* 1440px */
+    
+    /* Max content width for readability on large screens */
+    .content-section {
+        max-width: 90rem; /* 1440px */
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: calc(18.75rem + 3rem); /* Sidebar + padding */
+    }
+    
+    /* Optimal reading width for sections */
+    .page-section {
+        max-width: 80rem; /* 1280px */
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Font scaling caps out */
+    body {
+        font-size: 1.125rem; /* 18px for better readability */
+    }
+    
+    /* Video container max size */
+    .video-container {
+        max-width: 56.25rem; /* 900px */
+    }
+}
+
+/* ===== LARGE/4K SCREENS (2560px+) ===== */
+@media (min-width: 160em) { /* 2560px */
+    
+    html {
+        font-size: 18px; /* Larger base for huge screens */
+    }
+    
+    /* Prevent excessive stretching */
+    .content-section {
+        max-width: 100rem; /* 1600px */
+    }
+    
+    .page-section {
+        max-width: 90rem; /* 1440px */
+    }
+    
+    /* Images and media stay reasonable */
+    .img-crop {
+        max-height: 31.25rem; /* 500px */
+    }
+}
+
+/* ===== TOUCH INTERACTIONS (ALL MOBILE DEVICES) ===== */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase all interactive elements for touch */
+    button, .btn, .sign, .add-task, .task-card button {
+        min-height: 2.75rem; /* 44px minimum */
+        min-width: 2.75rem;
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .btn:hover, .sb:hover, .sign:hover {
+        transform: none;
+        width: auto;
+        height: auto;
+    }
+    
+    /* Add active states instead */
+    .btn:active, .sign:active, button:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+    }
+    
+    /* Ensure form elements are touch-friendly */
+    input, textarea, select {
+        min-height: 2.75rem;
+        font-size: 1rem; /* Prevent zoom on iOS */
+    }
+}
+
+/* ===== LANDSCAPE ORIENTATION ON MOBILE ===== */
+@media (max-width: 48em) and (orientation: landscape) {
+    /* Reduce vertical spacing in landscape */
+    .page-section {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    .content-section {
+        padding-top: 3rem;
+    }
+    
+    /* Sidebar overlay in landscape too */
+    .maincontainer {
+        left: -100%;
+    }
+    
+    .hamburger-menu {
+        display: block;
+    }
+}
+
+/* ===== HIGH DPI SCREENS (RETINA) ===== */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Sharper borders on high-DPI screens */
+    .btn, .sign, .page-section, .task-card {
+        border-width: 0.0625rem; /* Thin but visible */
+    }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .maincontainer, .hamburger-menu, .login, .mobile-overlay {
+        display: none !important;
+    }
+    
+    .content-section {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    
+    .page-section {
+        page-break-inside: avoid;
+        border: 0.0625rem solid #000;
+    }
+}
+
+/* ===== REDUCED MOTION PREFERENCE ===== */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .hamburger-menu span,
+    .maincontainer,
+    .task-card,
+    button {
+        transition: none !important;
+    }
 }

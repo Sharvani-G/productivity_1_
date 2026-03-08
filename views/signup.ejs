@@ -12,45 +12,49 @@
     body {
       margin: 0;
       padding: 0;
-      height: 100vh;
+      min-height: 100vh;
       background: linear-gradient(180deg, #000814, #001d3d, #003566);
       display: flex;
       justify-content: center;
       align-items: center;
       font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
     }
 
     .signup-box {
       background: #ffffff;
-      width: 380px;
-      border-radius: 12px;
-      padding: 40px 35px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      width: min(90vw, 23.75rem);
+      border-radius: clamp(0.625rem, 2vw, 0.75rem);
+      padding: clamp(1.25rem, 5vw, 2.5rem) clamp(1rem, 4vw, 2.1875rem);
+      box-shadow: 0 0.5rem 1.5625rem rgba(0, 0, 0, 0.5);
     }
 
     .signup-box h2 {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: clamp(0.875rem, 4vw, 1.5625rem);
       color: #001d3d;
       font-weight: 700;
+      font-size: clamp(1.25rem, 4vw, 1.75rem);
     }
 
     label {
       display: block;
       font-weight: 600;
       color: #000814;
-      margin-top: 10px;
-      margin-bottom: 5px;
+      margin-top: clamp(0.5rem, 2vw, 0.625rem);
+      margin-bottom: clamp(0.25rem, 1vw, 0.3125rem);
     }
 
     input {
       width: 100%;
-      padding: 12px;
-      border: 1px solid #001d3d;
-      border-radius: 8px;
+      padding: clamp(0.625rem, 2vw, 0.75rem);
+      border: 0.0625rem solid #001d3d;
+      border-radius: 0.5rem;
       background: #f8f9fa;
-      font-size: 14px;
+      font-size: clamp(0.875rem, 2vw, 1rem);
       outline: none;
+      min-height: 2.75rem;
+      box-sizing: border-box;
     }
 
     .password-container {
@@ -61,26 +65,30 @@
 
     .password-container span {
       position: absolute;
-      right: 15px;
+      right: clamp(0.625rem, 2.5vw, 0.9375rem);
       color: #001d3d;
       font-weight: 600;
       cursor: pointer;
       user-select: none;
-      font-size: 14px;
+      font-size: clamp(0.75rem, 2vw, 0.875rem);
+      min-height: 2.75rem;
+      display: inline-flex;
+      align-items: center;
     }
 
     button {
       width: 100%;
-      padding: 12px;
-      margin-top: 20px;
+      padding: clamp(0.625rem, 2vw, 0.75rem);
+      margin-top: clamp(0.875rem, 3vw, 1.25rem);
       border: none;
-      border-radius: 8px;
+      border-radius: 0.5rem;
       background: #001d3d;
       color: #fff;
-      font-size: 16px;
+      font-size: clamp(0.875rem, 2vw, 1rem);
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
+      min-height: 2.75rem;
     }
 
     button:hover {
@@ -89,7 +97,7 @@
 
     .login-text {
       text-align: center;
-      margin-top: 20px;
+      margin-top: clamp(0.875rem, 3vw, 1.25rem);
       color: #001d3d;
     }
 
@@ -104,8 +112,8 @@
     }
 
     .feedback {
-      font-size: 12px;
-      margin-top: 3px;
+      font-size: clamp(0.688rem, 1.8vw, 0.75rem);
+      margin-top: 0.1875rem;
       color: red;
       display: none;
     }
@@ -120,6 +128,12 @@
 
     .input.is-valid {
       border-color: #28a745 !important;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      button:hover {
+        background: #001d3d;
+      }
     }
   </style>
 </head>

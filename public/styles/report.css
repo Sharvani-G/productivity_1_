@@ -1,9 +1,13 @@
-html,body{
-    overflow-x:hidden;
+/* ============================
+   REPORT PAGE RESPONSIVE DESIGN
+   Mobile First Approach
+   ============================ */
+
+html, body {
+    overflow-x: hidden;
 }
 
-/* ELITE PRODUCTIVITY DASHBOARD - FINAL STYLES */
-
+/* ELITE PRODUCTIVITY DASHBOARD - RESPONSIVE */
 .dashboard-body-container {
     background: #000 !important;
     color: #fff !important;
@@ -14,176 +18,441 @@ html,body{
     min-height: 100vh;
 }
 
+/* Mobile-first padding - scales from 20px to 226px */
 .dashboard-wrapper {
-    padding: 60px clamp(40px, 12vw, 226px);
+    padding: clamp(1.25rem, 8vw, 3.75rem) clamp(1rem, 8vw, 14.125rem);
 }
 
+/* Responsive title - scales from 24px on mobile to 52px on desktop */
 .flashy-title {
-    font-size: 52px;
+    font-size: clamp(1.5rem, 8vw, 3.25rem); /* 24px-52px fluid */
     font-weight: 800;
     text-align: center;
     background: linear-gradient(to right, #03045e, #00b4d8); 
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
+    padding: 0 0.5rem; /* Prevent text cutoff on small screens */
 }
 
-.hero-subtitle { text-align: center; color: #90e0ef; margin-bottom: 40px; }
+.hero-subtitle { 
+    text-align: center; 
+    color: #90e0ef; 
+    margin-bottom: clamp(1.25rem, 4vw, 2.5rem);
+    font-size: clamp(0.875rem, 2.5vw, 1.125rem);
+    padding: 0 1rem;
+}
 
-/* GRID SYSTEM */
+/* GRID SYSTEM - MOBILE FIRST */
 .dashboard-grid {
     display: grid;
-    max-width: 1400px;
+    max-width: 87.5rem; /* 1400px */
     margin: auto;
-    gap: 20px;
+    gap: clamp(0.625rem, 2vw, 1.25rem); /* 10px-20px responsive gap */
+    /* Mobile: single column stacked */
     grid-template-areas:
-        "s1 s2 s3 s4"
-        "heat heat heat side"
-        "line line bar bar";
-    grid-template-columns: repeat(4, 1fr);
+        "s1"
+        "s2"
+        "s3"
+        "s4"
+        "heat"
+        "side"
+        "line"
+        "bar";
+    grid-template-columns: 1fr;
+    padding: 0 0.5rem; /* Mobile padding */
 }
 
-.area-s1 { grid-area: s1; } .area-s2 { grid-area: s2; } .area-s3 { grid-area: s3; } .area-s4 { grid-area: s4; }
-.area-heat { grid-area: heat; } .area-side { grid-area: side; } .area-line { grid-area: line; } .area-bar { grid-area: bar; }
+/* Grid area assignments */
+.area-s1 { grid-area: s1; } 
+.area-s2 { grid-area: s2; } 
+.area-s3 { grid-area: s3; } 
+.area-s4 { grid-area: s4; }
+.area-heat { grid-area: heat; } 
+.area-side { grid-area: side; } 
+.area-line { grid-area: line; } 
+.area-bar { grid-area: bar; }
 
+/* Card styling - responsive padding */
 .card { 
     background: #0a0f1d !important; 
-    border: 1px solid #03045e !important; 
-    border-radius: 12px; 
-    padding: 20px; 
+    border: 0.0625rem solid #03045e !important;
+    border-radius: clamp(0.5rem, 2vw, 0.75rem); /* 8px-12px fluid */
+    padding: clamp(0.875rem, 3vw, 1.25rem); /* 14px-20px fluid */
     display: flex; 
     flex-direction: column; 
     align-items: center;
-    overflow: hidden; 
+    overflow: hidden;
+    min-height: 6.25rem; /* 100px minimum */
 }
 
 .card h1 { 
-    font-size: 14px !important; 
+    font-size: clamp(0.75rem, 2.5vw, 0.875rem) !important; /* 12px-14px fluid */
     color: #90e0ef !important; 
-    margin-bottom: 10px; 
+    margin-bottom: clamp(0.5rem, 2vw, 0.625rem);
     font-weight: 700; 
     width: 100%; 
     text-align: center; 
     text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.num { font-size: 32px !important; font-weight: bold; margin: 0; }
+/* Number display - responsive sizing */
+.num { 
+    font-size: clamp(1.5rem, 6vw, 2rem) !important; /* 24px-32px fluid */
+    font-weight: bold; 
+    margin: 0; 
+}
+
 .green { color: #7ff477 !important; } 
 .yellow { color: #f8d97d !important; } 
 .red { color: #F46060 !important; }
 
-/* HEATMAP STYLES */
-/* HEATMAP STYLES - UPDATED FOR GITHUB GRID */
+/* HEATMAP - MOBILE RESPONSIVE */
 .streak-wrapper { 
     width: 100%; 
     display: flex; 
     justify-content: center; 
-    padding: 15px 0; 
-    overflow-x: auto; /* scroll on mobile */
+    padding: clamp(0.625rem, 2vw, 0.938rem) 0; /* 10px-15px fluid */
+    overflow-x: auto; /* Horizontal scroll on mobile */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .heatmap-grid { 
     display: grid; 
     /* 7 rows for Mon-Sun */
-    grid-template-rows: repeat(7, 12px); 
-    /* Automatic columns */
+    grid-template-rows: repeat(7, clamp(0.625rem, 2vw, 0.75rem)); /* 10px-12px fluid */
     grid-auto-flow: column; 
-    gap: 4px; 
-    min-height: 100px;
+    gap: clamp(0.188rem, 0.5vw, 0.25rem); /* 3px-4px fluid */
+    min-height: 6.25rem; /* 100px */
 }
 
+/* Heatmap dots - responsive sizing */
 .dot { 
-    width: 12px; 
-    height: 12px; 
-    border-radius: 2px; 
+    width: clamp(0.625rem, 2vw, 0.75rem); /* 10px-12px fluid */
+    height: clamp(0.625rem, 2vw, 0.75rem);
+    border-radius: 0.125rem; 
     transition: transform 0.1s ease;
     cursor: help;
 }
 
 .dot:hover {
     transform: scale(1.3);
-    outline: 1px solid #90e0ef;
+    outline: 0.0625rem solid #90e0ef;
     z-index: 10;
 }
 
-/* GitHub Inspired Colors using your theme */
-.lvl-0 { background: #1e293b; } /* Empty */
-.lvl-1 { background: #03045e; } /* 1-2 tasks */
-.lvl-2 { background: #0077b6; } /* 3-5 tasks */
-.lvl-3 { background: #00b4d8; } /* 6-8 tasks */
-.lvl-4 { background: #caf0f8; } /* 9+ tasks */
+/* GitHub Inspired Colors */
+.lvl-0 { background: #1e293b; } 
+.lvl-1 { background: #03045e; } 
+.lvl-2 { background: #0077b6; } 
+.lvl-3 { background: #00b4d8; } 
+.lvl-4 { background: #caf0f8; } 
 
-.heatmap-legend { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
-.legend-dots { display: flex; gap: 4px; }
-.legend-text { font-size: 12px; color: #90e0ef; }
+/* Legend - responsive */
+.heatmap-legend { 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: clamp(0.5rem, 2vw, 0.625rem);
+    margin-top: clamp(0.5rem, 2vw, 0.625rem);
+    flex-wrap: wrap; /* Wrap on very small screens */
+}
+
+.legend-dots { 
+    display: flex; 
+    gap: clamp(0.188rem, 0.5vw, 0.25rem);
+}
+
+.legend-text { 
+    font-size: clamp(0.688rem, 2vw, 0.75rem); /* 11px-12px fluid */
+    color: #90e0ef; 
+}
 
 /* Instruction Hint */
 .heatmap-hint {
-    font-size: 11px;
+    font-size: clamp(0.625rem, 2vw, 0.688rem); /* 10px-11px fluid */
     color: #90e0ef;
     opacity: 0.8;
-    margin-bottom: 10px;
+    margin-bottom: clamp(0.5rem, 2vw, 0.625rem);
     text-align: center;
+    padding: 0 0.5rem;
 }
 
-/* Custom Tooltip Styling */
+/* Custom Tooltip - responsive */
 .custom-tooltip {
     position: fixed;
-    pointer-events: none; /* So it doesn't block the mouse */
-    background: rgba(10, 15, 29, 0.9); /* Dark Navy */
+    pointer-events: none;
+    background: rgba(10, 15, 29, 0.95);
     backdrop-filter: blur(8px);
-    border: 1px solid #03045e;
+    border: 0.0625rem solid #03045e;
     color: #fff;
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 12px;
-    display: none; /* Hidden by default */
+    padding: clamp(0.5rem, 2vw, 0.625rem) clamp(0.625rem, 2vw, 0.875rem);
+    border-radius: clamp(0.375rem, 1.5vw, 0.5rem);
+    font-size: clamp(0.688rem, 2vw, 0.75rem);
+    display: none;
     z-index: 9999;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.25rem 0.938rem rgba(0, 0, 0, 0.5);
     line-height: 1.5;
+    max-width: 15rem; /* Prevent overflow on small screens */
 }
 
 .tooltip-date {
     font-weight: bold;
     color: #00b4d8;
     display: block;
-    margin-bottom: 4px;
-    border-bottom: 1px solid rgba(144, 224, 239, 0.2);
-    padding-bottom: 4px;
+    margin-bottom: 0.25rem;
+    border-bottom: 0.0625rem solid rgba(144, 224, 239, 0.2);
+    padding-bottom: 0.25rem;
 }
 
-/* STATUS OVERVIEW CENTERING */
+/* STATUS OVERVIEW - RESPONSIVE */
 .donut-fixed-box { 
-    height: 160px; 
+    height: clamp(8rem, 25vh, 10rem); /* 128px-160px responsive */
     width: 100%; 
-    margin-top: 10px;
+    margin-top: clamp(0.5rem, 2vw, 0.625rem);
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
 }
 
-/* CHART OVERFLOW FIX */
+/* CHART BOX - RESPONSIVE HEIGHT */
 .main-chart-box { 
-    display: flex; width: 100%; height: 300px; 
-    align-items: stretch; margin-top: 20px; position: relative;
+    display: flex; 
+    width: 100%; 
+    height: clamp(12.5rem, 40vh, 18.75rem); /* 200px-300px responsive */
+    align-items: stretch; 
+    margin-top: clamp(0.75rem, 3vw, 1.25rem);
+    position: relative;
     overflow: hidden;
 }
 
 .canvas-holder { 
-    flex: 1; position: relative; min-width: 0; height: 100%;
+    flex: 1; 
+    position: relative; 
+    min-width: 0; 
+    height: 100%;
 }
 
-.axis-label-sync { font-size: 11px !important; font-weight: 600 !important; color: #90e0ef !important; }
-.y-title-container { width: 40px; display: flex; align-items: center; justify-content: center; }
-.y-title-container .axis-label-sync { transform: rotate(-90deg); white-space: nowrap; }
+/* Axis labels - responsive */
+.axis-label-sync { 
+    font-size: clamp(0.625rem, 2vw, 0.688rem) !important; /* 10px-11px fluid */
+    font-weight: 600 !important; 
+    color: #90e0ef !important; 
+}
 
-.segmented-control { display: flex; background: rgba(3, 4, 94, 0.4); padding: 4px; border-radius: 8px; }
-.seg-btn { background: transparent; border: none; color: #90e0ef; padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer; border-radius: 6px; }
-.seg-btn.active { background: #0077b6; color: #fff; }
+.y-title-container { 
+    width: clamp(2rem, 5vw, 2.5rem); /* 32px-40px responsive */
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
 
-.status-list { list-style: none; padding: 0; width: 100%; font-size: 12px; text-align: center; }
-.dot-indicator { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-.green-bg { background: #22c55e; } .yellow-bg { background: #eab308; } .red-bg { background: #ef4444; }
+.y-title-container .axis-label-sync { 
+    transform: rotate(-90deg); 
+    white-space: nowrap; 
+}
 
-.dynamic-box { position: absolute; top: 0; right: 0; font-size: 12px; }
-.x-axis-footer { margin-top: 10px; text-align: center; width: 100%; }
+/* Segmented control - responsive */
+.segmented-control { 
+    display: flex; 
+    background: rgba(3, 4, 94, 0.4); 
+    padding: clamp(0.188rem, 0.5vw, 0.25rem);
+    border-radius: clamp(0.375rem, 1.5vw, 0.5rem);
+    flex-wrap: wrap; /* Wrap buttons on very small screens */
+    gap: 0.125rem;
+}
+
+.seg-btn { 
+    background: transparent; 
+    border: none; 
+    color: #90e0ef; 
+    padding: clamp(0.375rem, 1.5vw, 0.5rem) clamp(0.625rem, 2vw, 0.75rem);
+    font-size: clamp(0.625rem, 2vw, 0.688rem); /* 10px-11px fluid */
+    font-weight: 600; 
+    cursor: pointer; 
+    border-radius: clamp(0.25rem, 1vw, 0.375rem);
+    min-height: 2.75rem; /* Touch-friendly */
+    transition: background 0.2s;
+}
+
+.seg-btn.active { 
+    background: #0077b6; 
+    color: #fff; 
+}
+
+.seg-btn:hover {
+    background: rgba(0, 119, 182, 0.3);
+}
+
+/* Status list - responsive */
+.status-list { 
+    list-style: none; 
+    padding: 0; 
+    width: 100%; 
+    font-size: clamp(0.688rem, 2vw, 0.75rem); /* 11px-12px fluid */
+    text-align: center; 
+}
+
+.dot-indicator { 
+    height: clamp(0.438rem, 1.5vw, 0.5rem); /* 7px-8px fluid */
+    width: clamp(0.438rem, 1.5vw, 0.5rem);
+    border-radius: 50%; 
+    display: inline-block; 
+    margin-right: clamp(0.375rem, 1.5vw, 0.5rem);
+}
+
+.green-bg { background: #22c55e; } 
+.yellow-bg { background: #eab308; } 
+.red-bg { background: #ef4444; }
+
+.dynamic-box { 
+    position: absolute; 
+    top: 0; 
+    right: 0; 
+    font-size: clamp(0.688rem, 2vw, 0.75rem);
+    padding: 0.25rem 0.5rem;
+}
+
+.x-axis-footer { 
+    margin-top: clamp(0.5rem, 2vw, 0.625rem);
+    text-align: center; 
+    width: 100%; 
+}
+
+/* ============================
+   MEDIA QUERIES - REPORT PAGE
+   ============================ */
+
+/* ===== SMALL PHONES AND UP (480px+) ===== */
+@media (min-width: 30em) { /* 480px */
+    /* Two-column grid for stat cards */
+    .dashboard-grid {
+        grid-template-areas:
+            "s1 s2"
+            "s3 s4"
+            "heat heat"
+            "side side"
+            "line line"
+            "bar bar";
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ===== TABLETS AND UP (768px+) ===== */
+@media (min-width: 48em) { /* 768px */
+    /* Three-column layout for tablets */
+    .dashboard-grid {
+        grid-template-areas:
+            "s1 s2 s3"
+            "s4 heat heat"
+            "side heat heat"
+            "line line bar";
+        grid-template-columns: repeat(3, 1fr);
+        padding: 0; /* Remove mobile padding */
+    }
+    
+    /* Larger heatmap dots on tablets */
+    .heatmap-grid {
+        grid-template-rows: repeat(7, 0.75rem); /* 12px */
+        gap: 0.25rem; /* 4px */
+    }
+    
+    .dot {
+        width: 0.75rem; /* 12px */
+        height: 0.75rem;
+    }
+    
+    /* Disable horizontal scroll on larger screens */
+    .streak-wrapper {
+        overflow-x: visible;
+    }
+}
+
+/* ===== SMALL LAPTOPS AND UP (1024px+) ===== */
+@media (min-width: 64em) { /* 1024px */
+    /* Four-column desktop layout */
+    .dashboard-grid {
+        grid-template-areas:
+            "s1 s2 s3 s4"
+            "heat heat heat side"
+            "line line bar bar";
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    /* Optimal chart height */
+    .main-chart-box {
+        height: 18.75rem; /* 300px */
+    }
+    
+    /* Better donut chart sizing */
+    .donut-fixed-box {
+        height: 10rem; /* 160px */
+    }
+}
+
+/* ===== DESKTOPS AND UP (1440px+) ===== */
+@media (min-width: 90em) { /* 1440px */
+    /* Max width for readability */
+    .dashboard-wrapper {
+        max-width: 93.75rem; /* 1500px */
+        margin: 0 auto;
+    }
+    
+    /* Larger gaps on big screens */
+    .dashboard-grid {
+        gap: 1.25rem; /* 20px */
+    }
+}
+
+/* ===== TOUCH DEVICES ===== */
+@media (hover: none) and (pointer: coarse) {
+    /* Make segmented controls touch-friendly */
+    .seg-btn {
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        padding: 0.625rem 1rem;
+    }
+    
+    /* Remove hover effects */
+    .dot:hover {
+        transform: none;
+    }
+    
+    /* Add tap feedback */
+    .seg-btn:active {
+        transform: scale(0.95);
+    }
+}
+
+/* ===== LANDSCAPE ON MOBILE ===== */
+@media (max-width: 48em) and (orientation: landscape) {
+    /* Reduce vertical padding in landscape */
+    .dashboard-wrapper {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    /* Make chart heights responsive to viewport */
+    .main-chart-box {
+        height: 40vh;
+    }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    .dashboard-body-container {
+        background: #fff !important;
+        color: #000 !important;
+    }
+    
+    .card {
+        border: 0.0625rem solid #000 !important;
+        page-break-inside: avoid;
+    }
+    
+    .dashboard-grid {
+        gap: 0.625rem;
+    }
+}

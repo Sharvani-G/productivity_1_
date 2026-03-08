@@ -1,8 +1,37 @@
 <link rel="stylesheet" href="/styles/report.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="<%= cspNonce %>"></script>
+<style nonce="<%= cspNonce %>">
+    /* Responsive back button for report page */
+    .back-btn {
+        position: fixed;
+        top: clamp(0.625rem, 2vw, 1.25rem);
+        left: clamp(0.625rem, 2vw, 1.25rem);
+        z-index: 9999;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: clamp(2.75rem, 8vw, 3.125rem);
+        height: clamp(2.75rem, 8vw, 3.125rem);
+        background-color: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.2);
+        text-decoration: none;
+    }
+
+    .back-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.28);
+    }
+
+    .back-btn svg {
+        width: clamp(1.25rem, 4vw, 1.5rem);
+        height: clamp(1.25rem, 4vw, 1.5rem);
+    }
+</style>
 
 <!-- Back Button -->
-<a href="/" style="position: fixed; top: 20px; left: 20px; z-index: 9999; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; background-color: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+<a href="/" class="back-btn" aria-label="Back to home">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <polyline points="15 18 9 12 15 6"></polyline>
   </svg>
